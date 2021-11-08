@@ -38,7 +38,8 @@ enum class TokenType
     Time_diff = 27,
     Else = 28,
     Invalid = 29,
-    Indentation = 30
+    Indentation = 30,
+    Id = 31
 };
 const std::unordered_map<int, std::string> print = {
 
@@ -72,7 +73,8 @@ const std::unordered_map<int, std::string> print = {
         {27, "Time_diff"},
         {28, "Else"},
         {29, "Invalid"},
-        {30, "Indentation"}
+        {30, "Indentation"},
+        {31, "Id"}
 };
 const std::unordered_map<std::string, TokenType> map = {
 

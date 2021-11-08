@@ -17,12 +17,15 @@ private:
     std::streampos last_pos_after_good_token = {};
     std::istream &handle;
     bool end_of_file = false;
+    bool first_next_line = false;
     char current_char;
     std::string parsed_token;
     Token active_token;
 
     char peekNextChar();
     bool getIndentation();
+    bool getKeywordOrId();
+    void ignore_comment();
 public:
     Lexer(std::istream &my_handle);
     Token getNextToken();
