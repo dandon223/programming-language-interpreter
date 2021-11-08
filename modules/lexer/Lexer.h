@@ -16,6 +16,7 @@ private:
     std::streampos current_line_start= {};
     std::streampos last_pos_after_good_token = {};
     std::istream &handle;
+    bool end_of_file = false;
     char current_char;
     std::string parsed_token;
     Token active_token;

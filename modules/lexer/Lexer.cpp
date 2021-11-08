@@ -2,6 +2,7 @@
 
 #include "Lexer.h"
 Lexer::Lexer(std::istream &my_handle) : handle(my_handle){
+    getNextChar();
 }
 void Lexer::getNextChar()
 {
@@ -28,61 +29,41 @@ void Lexer::printStream(){
 }
 bool Lexer::endOfFile()
 {
-    return handle.eof();
+    return end_of_file;
 }
 Token Lexer::getNextToken(){
-    last_pos_after_good_token = handle.tellg();
-    getNextChar();
-    active_token.type = TokenType::Invalid;
-    if(handle.peek()==EOF){
-        active_token.type = TokenType::End_of_text;
-        return active_token;
+    while(current_char == '\n'){
+        last_pos_after_good_token = handle.tellg();
+        getNextChar();
     }
+    active_token.line_number = line;
+    active_token.column_number = column;
+    active_token.type = TokenType::Invalid;
+
     // nowa linia, musimy policzyć wcięcia
-    if(current_char == '\n' || current_char == '\t' || current_char == ' '){
+    if( current_char == '\t' ){
         if(getIndentation()){
             return active_token;
         }
     }
+    if(current_char==EOF){
+        active_token.type = TokenType::End_of_text;
+        end_of_file= true;
+        return active_token;
+    }
+    getNextChar();
     return active_token;
 }
 bool Lexer::getIndentation(){
     active_token.type = TokenType::Invalid;
-    int number_of_indentation = 0;
-    if(current_char == '\t' ){
-        column -= 4;
-        handle.seekg(last_pos_after_good_token);
-    }
-    else if(current_char == ' '){
-        column--;
-        handle.seekg(last_pos_after_good_token);
-    }
-    while(peekNextChar() == ' ' || peekNextChar() == '\t'){
+    int number_of_indentation = 1;
+    active_token.column_number = column -4;
+    do{
+        getNextChar();
+        number_of_indentation ++;
+    }while(current_char=='\t');
 
-        // dla spacji potrzebujemy 4 pod rząd, inaczej błąd
-        if(peekNextChar() == ' '){
-            getNextChar();
-            for(int i=0 ; i<3;i++){
-                if(peekNextChar() != ' '){
-                    std::cout << "Brak 4 spacji\n";
-                    active_token.value =-1;
-                    active_token.line_number = line;
-                    active_token.column_number = column;
-                    return false;
-                }
-                getNextChar();
-            }
-            number_of_indentation ++;
-            // dla kazdego tab jedno wcięcie
-        }else{
-            number_of_indentation++;
-            getNextChar();
-        }
-    }
     active_token.type = TokenType::Indentation;
     active_token.value = number_of_indentation;
-    active_token.line_number = line;
-    active_token.column_number = column;
-
     return true;
 }

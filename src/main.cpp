@@ -29,9 +29,6 @@ int main()
 //        std::cout << char(h.get());
 
     Lexer lexer = Lexer(handle);
-    std::cout << getStringToken(lexer.getNextToken()) <<"\n";
-    std::cout << getStringToken(lexer.getNextToken()) <<"\n";
-    std::cout << getStringToken(lexer.getNextToken()) <<"\n";
     while(!lexer.endOfFile())
         std::cout << getStringToken(lexer.getNextToken()) <<"\n";
     return 1;
