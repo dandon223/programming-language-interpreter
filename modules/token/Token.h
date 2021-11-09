@@ -4,6 +4,7 @@
 #define TKOM_21Z_DANIEL_TOKEN_H
 
 #include <variant>
+#include <string>
 #include <unordered_map>
 
 enum class TokenType
