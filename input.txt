@@ -1,2 +1,6 @@
-A//
-BD fun//m kaeng kgafmg a'df 
+//while else if return timeDiff date string float int fun and or
+		A
+//( ) , : ! != == > < >= <= = + - /
+ 
+	 
+	*

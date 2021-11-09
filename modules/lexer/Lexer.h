@@ -17,7 +17,7 @@ private:
     std::streampos last_pos_after_good_token = {};
     std::istream &handle;
     bool end_of_file = false;
-    bool first_next_line = false;
+    bool first_line = true;
     char current_char;
     std::string parsed_token;
     Token active_token;
@@ -25,7 +25,8 @@ private:
     char peekNextChar();
     bool getIndentation();
     bool getKeywordOrId();
-    void ignore_comment();
+    bool getOperators();
+    bool ignore_comment();
 public:
     Lexer(std::istream &my_handle);
     Token getNextToken();

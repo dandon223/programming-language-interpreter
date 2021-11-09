@@ -81,7 +81,7 @@ const std::unordered_map<std::string, TokenType> map = {
         {"(", TokenType::Left_parentheses},
         {")", TokenType::Right_parentheses},
         {",", TokenType::Comma},
-        {",", TokenType::Colon},
+        {":", TokenType::Colon},
         {"!", TokenType::Negation},
         {"and", TokenType::And_operator},
         {"or", TokenType::Or_operator},
