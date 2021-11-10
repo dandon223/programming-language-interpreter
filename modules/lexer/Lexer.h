@@ -26,6 +26,8 @@ private:
     bool getIndentation();
     bool getKeywordOrId();
     bool getOperators();
+    bool getString();
+    bool getNumber();
     bool ignore_comment();
 public:
     Lexer(std::istream &my_handle);

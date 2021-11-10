@@ -31,7 +31,7 @@ int main()
     Lexer lexer = Lexer(handle);
    while(!lexer.endOfFile())
        std::cout << getStringToken(lexer.getNextToken()) <<"\n";
-       // lexer.printStream();
+
     return 1;
 }
 

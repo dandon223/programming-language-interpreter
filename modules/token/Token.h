@@ -40,7 +40,8 @@ enum class TokenType
     Else = 28,
     Invalid = 29,
     Indentation = 30,
-    Id = 31
+    Id = 31,
+    Number = 32
 };
 const std::unordered_map<int, std::string> print = {
 
@@ -75,7 +76,8 @@ const std::unordered_map<int, std::string> print = {
         {28, "Else"},
         {29, "Invalid"},
         {30, "Indentation"},
-        {31, "Id"}
+        {31, "Id"},
+        {32, "Number"}
 };
 const std::unordered_map<std::string, TokenType> map = {
 
@@ -111,18 +113,17 @@ const std::unordered_map<std::string, TokenType> map = {
 struct Token
 {
     TokenType type;
-    std::variant<int, std::string,float> value;
+    std::variant<int, std::string,double> value;
     int line_number ;
     int column_number ;
-    std::streampos sourcepos;
 };
 
 struct TokenGet {
     std::string operator()(int value) { return std::to_string(value); }
     std::string operator()(std::string value) { return value;}
-    std::string operator()(float value) { return std::to_string(value); }
+    std::string operator()(double value) { return std::to_string(value); }
 };
-std::string TokenValueToString(const std::variant<int, std::string,float>& input);
+std::string TokenValueToString(const std::variant<int, std::string,double>& input);
 std::string getStringToken(struct Token token);
 
 #endif //TKOM_21Z_DANIEL_TOKEN_H

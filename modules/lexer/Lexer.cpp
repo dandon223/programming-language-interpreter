@@ -33,31 +33,12 @@ bool Lexer::endOfFile()
     return end_of_file;
 }
 Token Lexer::getNextToken(){
-//    if(current_char == '\n' || first_line){
-//        first_line = false;
-//        while(current_char == '\n'){
-//            last_pos_after_good_token = handle.tellg();
-//            getNextChar();
-//        }
-//        ignore_comment();
-//        active_token.line_number = line;
-//        active_token.column_number = column;
-//        active_token.type = TokenType::Invalid;
-//        // nowa linia, musimy policzyć wcięcia
-//        if( current_char == '\t' ){
-//            if(getIndentation()){
-//                return active_token;
-//            }
-//        }
-//    }
     ignore_comment();
 
     active_token.type = TokenType::Invalid;
     active_token.value = -1;
     active_token.line_number = line;
     active_token.column_number = column;
-    //while(current_char == '\n' && peekNextChar() == '\n')
-    //    getNextChar();
 
     if(getIndentation())
         return active_token;
@@ -65,6 +46,11 @@ Token Lexer::getNextToken(){
         return active_token;
     if(getOperators())
         return active_token;
+    if(getString())
+        return active_token;
+    if(getNumber())
+        return active_token;
+
 
 
     if(current_char==EOF){
@@ -84,6 +70,89 @@ bool Lexer::ignore_comment(){
             }
             return true;
         }
+    }
+    return false;
+}
+bool Lexer::getNumber() {
+    std::string number;
+    if (!isdigit(current_char))
+        return false;
+    double tmpSum = current_char - '0';
+    getNextChar();
+    if(tmpSum == 0 && isdigit(current_char)){
+        active_token.type = TokenType::Invalid;
+        active_token.value = "Leading zeros in number.";
+        while(isdigit(current_char))
+            getNextChar();
+        if(current_char == '.'){
+            getNextChar();
+            while(isdigit(current_char))
+                getNextChar();
+        }
+        return true;
+    }
+    while (isdigit(current_char)){
+        number +=current_char;
+
+        if (tmpSum * 10 + 1 > std::numeric_limits<double>::max()/10){
+            active_token.value = "Value overflow.";
+            while(isdigit(current_char))
+                getNextChar();
+            if(current_char == '.'){
+                getNextChar();
+                while(isdigit(current_char))
+                    getNextChar();
+            }
+            return true;
+        }
+        tmpSum = tmpSum * 10 + current_char - '0';
+        getNextChar();
+    }
+    if(current_char != '.'){
+        if(tmpSum > std::numeric_limits<int>::max()){
+            active_token.value = "Value overflow.";
+            return true;
+        }
+        active_token.type = TokenType::Number;
+        active_token.value = int(tmpSum);
+        return true;
+    }else{
+        int number_after_dot = 0;
+        double after_dot = 0;
+        getNextChar();
+        while(isdigit(current_char)){
+            after_dot = after_dot * 10 + current_char - '0';
+            getNextChar();
+            number_after_dot++;
+        }
+        if(number_after_dot >0)
+            tmpSum = tmpSum + after_dot/(10^number_after_dot);
+        active_token.type = TokenType::Number;
+        active_token.value = tmpSum;
+        getNextChar();
+        return true;
+    }
+
+}
+bool Lexer::getString() {
+    std::string word;
+
+    if(current_char == '\"'){
+        getNextChar();
+        while( current_char != EOF && ( current_char != '\"' || ( current_char=='\"' && word.back() == '\\' ) ) ){
+            word +=current_char;
+            getNextChar();
+        }
+        if(current_char == EOF){
+            active_token.type = TokenType::Invalid;
+            active_token.value = "No ending \" for string.";
+            getNextChar();
+            return true;
+        }
+        active_token.type = TokenType::String;
+        active_token.value = word;
+        getNextChar();
+        return true;
     }
     return false;
 }
