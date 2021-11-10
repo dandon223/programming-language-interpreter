@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <string>
 #include "../token/Token.h"
 class Lexer {
 private:
@@ -28,6 +29,7 @@ private:
     bool getOperators();
     bool getString();
     bool getNumber();
+    bool getDate();
     bool ignore_comment();
 public:
     Lexer(std::istream &my_handle);

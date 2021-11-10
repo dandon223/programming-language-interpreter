@@ -41,7 +41,8 @@ enum class TokenType
     Invalid = 29,
     Indentation = 30,
     Id = 31,
-    Number = 32
+    Number = 32,
+
 };
 const std::unordered_map<int, std::string> print = {
 
@@ -77,7 +78,7 @@ const std::unordered_map<int, std::string> print = {
         {29, "Invalid"},
         {30, "Indentation"},
         {31, "Id"},
-        {32, "Number"}
+        {32, "Number"},
 };
 const std::unordered_map<std::string, TokenType> map = {
 

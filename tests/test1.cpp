@@ -60,4 +60,21 @@ BOOST_AUTO_TEST_CASE( ReservedWords ){
         BOOST_CHECK(tokens[11].type == TokenType::End_of_text);
         BOOST_CHECK(tokens.size() == 12);
 }
+BOOST_AUTO_TEST_CASE( NewLinesTabAndComments ){
+        std::string text = "    //FAFGAGAD  \n"
+                           " \n"
+                           "       \n"
+                           "";
+        std::istringstream  handle(text);
+        Lexer lexer = Lexer(handle);
+        std::vector<Token> tokens;
+        while(!lexer.endOfFile())
+            tokens.push_back(lexer.getNextToken());
+        BOOST_CHECK(tokens[0].type == TokenType::Indentation);
+        BOOST_CHECK(tokens[1].type == TokenType::Invalid);
+        BOOST_CHECK(std::get<std::string>(tokens[1].value) == "spacebar after indentation");
+        BOOST_CHECK(tokens[2].type == TokenType::End_of_text);
+        //BOOST_CHECK(tokens.size() == 12);
+
+}
 BOOST_AUTO_TEST_SUITE_END()

@@ -36,7 +36,7 @@ Token Lexer::getNextToken(){
     ignore_comment();
 
     active_token.type = TokenType::Invalid;
-    active_token.value = -1;
+    active_token.value = "Invalid character.";
     active_token.line_number = line;
     active_token.column_number = column;
 
@@ -59,6 +59,7 @@ Token Lexer::getNextToken(){
         active_token.value = 0;
         return active_token;
     }
+    getNextChar();
     return active_token;
 }
 bool Lexer::ignore_comment(){
@@ -73,14 +74,30 @@ bool Lexer::ignore_comment(){
     }
     return false;
 }
+bool Lexer::getDate(){
+    //bool is_date = false;
+   // bool is_timeDiff = false;
+    if(current_char != '[')
+        return false;
+    //int first = 0;
+
+    return true;
+}
 bool Lexer::getNumber() {
+    active_token.type = TokenType::Invalid;
     std::string number;
+    if(current_char =='.' && isdigit(peekNextChar())){
+        getNextChar();
+        while(isdigit(current_char))
+            getNextChar();
+        active_token.value = "No numbers before comma.";
+        return true;
+    }
     if (!isdigit(current_char))
         return false;
-    double tmpSum = current_char - '0';
+    number += current_char;
     getNextChar();
-    if(tmpSum == 0 && isdigit(current_char)){
-        active_token.type = TokenType::Invalid;
+    if(number == "0" && isdigit(current_char)){
         active_token.value = "Leading zeros in number.";
         while(isdigit(current_char))
             getNextChar();
@@ -93,46 +110,35 @@ bool Lexer::getNumber() {
     }
     while (isdigit(current_char)){
         number +=current_char;
-
-        if (tmpSum * 10 + 1 > std::numeric_limits<double>::max()/10){
-            active_token.value = "Value overflow.";
-            while(isdigit(current_char))
-                getNextChar();
-            if(current_char == '.'){
-                getNextChar();
-                while(isdigit(current_char))
-                    getNextChar();
-            }
-            return true;
-        }
-        tmpSum = tmpSum * 10 + current_char - '0';
         getNextChar();
     }
     if(current_char != '.'){
-        if(tmpSum > std::numeric_limits<int>::max()){
+        try{
+            int number_from_stoi = std::stoi(number);
+            active_token.type = TokenType::Number;
+            active_token.value = number_from_stoi;
+            return true;
+        }catch (const std::exception& out_of_range){
             active_token.value = "Value overflow.";
             return true;
         }
-        active_token.type = TokenType::Number;
-        active_token.value = int(tmpSum);
-        return true;
     }else{
-        int number_after_dot = 0;
-        double after_dot = 0;
+        number +='.';
         getNextChar();
         while(isdigit(current_char)){
-            after_dot = after_dot * 10 + current_char - '0';
+            number +=current_char;
             getNextChar();
-            number_after_dot++;
         }
-        if(number_after_dot >0)
-            tmpSum = tmpSum + after_dot/(10^number_after_dot);
-        active_token.type = TokenType::Number;
-        active_token.value = tmpSum;
-        getNextChar();
-        return true;
+        try{
+            double number_from_stod = std::stod(number);
+            active_token.type = TokenType::Number;
+            active_token.value = number_from_stod;
+            return true;
+        }catch (const std::exception& out_of_range){
+            active_token.value = "Value overflow.";
+            return true;
+        }
     }
-
 }
 bool Lexer::getString() {
     std::string word;
@@ -175,12 +181,17 @@ bool Lexer::getKeywordOrId() {
         active_token.type = map.at(word);
         active_token.value = word;
         getNextChar();
+        while(current_char ==' ' || current_char =='\t')
+            getNextChar();
         return true;
     }
+
 
     active_token.value = word;
     active_token.type = TokenType::Id;
     getNextChar();
+    while(current_char ==' ' || current_char =='\t')
+        getNextChar();
     return true;
 }
 bool Lexer::getOperators() {
@@ -206,11 +217,17 @@ bool Lexer::getOperators() {
     return true;
 }
 bool Lexer::getIndentation(){
-    while(ignore_comment()){
-        getNextChar();
-    }
+
     if(current_char != '\n' && !first_line){
         return false;
+    }
+    while(current_char == '\n'){
+        getNextChar();
+        active_token.line_number = line;
+    }
+
+    while(ignore_comment()){
+        getNextChar();
     }
     first_line = false;
     if(current_char == '\t')
@@ -227,6 +244,7 @@ bool Lexer::getIndentation(){
     }
     if(current_char == ' '){
         active_token.line_number = line;
+        active_token.column_number = column;
         while(current_char == ' ')
             getNextChar();
 
@@ -238,6 +256,5 @@ bool Lexer::getIndentation(){
 
     active_token.type = TokenType::Indentation;
     active_token.value = number_of_indentation;
-    active_token.line_number = line;
     return true;
 }
