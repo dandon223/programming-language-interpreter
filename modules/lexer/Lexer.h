@@ -3,7 +3,6 @@
 #ifndef TKOM_21Z_DANIEL_LEXER_H
 #define TKOM_21Z_DANIEL_LEXER_H
 
-
 #include <iosfwd>
 #include <fstream>
 #include <sstream>
@@ -30,6 +29,7 @@ private:
     bool getString();
     bool getNumber();
     bool getDate();
+    bool getTimeDiff();
     bool ignore_comment();
 public:
     Lexer(std::istream &my_handle);

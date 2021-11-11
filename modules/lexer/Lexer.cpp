@@ -1,6 +1,8 @@
 
 
 #include "Lexer.h"
+#include "../structures/Date.h"
+//#include "../structures/Date.cpp"
 Lexer::Lexer(std::istream &my_handle) : handle(my_handle){
     getNextChar();
 }
@@ -50,6 +52,10 @@ Token Lexer::getNextToken(){
         return active_token;
     if(getNumber())
         return active_token;
+    if(getDate())
+        return active_token;
+    if(getTimeDiff())
+        return active_token;
 
 
 
@@ -74,13 +80,157 @@ bool Lexer::ignore_comment(){
     }
     return false;
 }
+bool Lexer::getTimeDiff() {
+    if(current_char !='{')
+        return false;
+    int year = 0;
+    int month = 0;
+    int day = 0;
+    getNextChar();
+    if(!isdigit(current_char)){
+        active_token.value ="No digit after {";
+        return true;
+    }
+    if(current_char == '0' && isdigit(peekNextChar())){
+        active_token.value ="Leading zeros in number.";
+        return true;
+    }
+    for(int i=0 ; i <4 ;i++){
+        if(isdigit(current_char)){
+            year = year * 10 + current_char - '0';
+            getNextChar();
+        }
+    }
+    if(isdigit(current_char)){
+        active_token.value ="Only up to 4 digits allowed for years.";
+        return true;
+    }
+    if(current_char != 'y'){
+        active_token.value ="No 'y' after int.";
+        return true;
+    }
+    getNextChar();
+
+    for(int i=0 ; i <2 ;i++){
+        if(isdigit(current_char)){
+            month = month * 10 + current_char - '0';
+            getNextChar();
+        }
+    }
+    if(isdigit(current_char)){
+        active_token.value ="Only up to 2 digits allowed for months.";
+        return true;
+    }
+    if(current_char != 'm'){
+        active_token.value ="No 'm' after int.";
+        return true;
+    }
+    getNextChar();
+
+    for(int i=0 ; i <2 ;i++){
+        if(isdigit(current_char)){
+            day = day * 10 + current_char - '0';
+            getNextChar();
+        }
+    }
+    if(isdigit(current_char)){
+        active_token.value ="Only up to 2 digits allowed for days.";
+        return true;
+    }
+    if(current_char != 'd'){
+        active_token.value ="No 'd' after int.";
+        return true;
+    }
+    getNextChar();
+    if(current_char != '}'){
+        active_token.value ="No '}' after 'd'.";
+        return true;
+    }
+    getNextChar();
+
+    TimeDiff timeDiff = TimeDiff(year,month,day);
+    active_token.type = TokenType::TimeDiffValue;
+    active_token.value = timeDiff;
+    return true;
+}
 bool Lexer::getDate(){
-    //bool is_date = false;
-   // bool is_timeDiff = false;
     if(current_char != '[')
         return false;
-    //int first = 0;
+    int year = 0;
+    int month = 0;
+    int day = 0;
+    getNextChar();
+    //while(current_char ==' ' || current_char =='\t'){
+     //   getNextChar();
+    //}
+    if(!isdigit(current_char)){
+        active_token.value ="No digit after [";
+        return true;
+    }
+    for(int i=0 ; i <4 ;i++){
+        if(!isdigit(current_char)){
+            active_token.value ="Need 4 digits for year";
+            getNextChar();
+            return true;
+        }
+        year = year * 10 + current_char - '0';
+        getNextChar();
+    }
+    if(isdigit(current_char)){
+        active_token.value ="Only 4 digits for year";
+        getNextChar();
+        return true;
+    }
 
+    if(current_char!=':'){
+        active_token.value ="No : after year.";
+        getNextChar();
+        return true;
+    }
+    getNextChar();
+    for(int i=0 ; i <2 ;i++){
+        if(!isdigit(current_char)){
+            active_token.value ="Need 2 digits for month";
+            getNextChar();
+            return true;
+        }
+        month = month * 10 + current_char - '0';
+        getNextChar();
+    }
+    if(isdigit(current_char)){
+        active_token.value ="Only 2 digits for month";
+        getNextChar();
+        return true;
+    }
+    if(current_char!=':'){
+        active_token.value ="No : after month.";
+        getNextChar();
+        return true;
+    }
+    getNextChar();
+    for(int i=0 ; i <2 ;i++){
+        if(!isdigit(current_char)){
+            active_token.value ="Need 2 digits for day";
+            getNextChar();
+            return true;
+        }
+        day = day * 10 + current_char - '0';
+        getNextChar();
+    }
+    if(isdigit(current_char)){
+        active_token.value ="Only 2 digits for day.";
+        getNextChar();
+        return true;
+    }
+    if(current_char!= ']'){
+        active_token.value ="No ] after day";
+        getNextChar();
+        return true;
+    }
+    getNextChar();
+    Date date = Date(year,month,day);
+    active_token.type = TokenType::DateValue;
+    active_token.value = date;
     return true;
 }
 bool Lexer::getNumber() {
@@ -155,7 +305,7 @@ bool Lexer::getString() {
             getNextChar();
             return true;
         }
-        active_token.type = TokenType::String;
+        active_token.type = TokenType::StringValue;
         active_token.value = word;
         getNextChar();
         return true;
@@ -228,6 +378,7 @@ bool Lexer::getIndentation(){
 
     while(ignore_comment()){
         getNextChar();
+        active_token.line_number = line;
     }
     first_line = false;
     if(current_char == '\t')

@@ -1,7 +1,4 @@
-//FAFGAGAD  
- 
-	
-
-
-
-
+string A = "A"
+date b [1999:01:01]
+if a-b > {10y1m0d}
+	print("YES")

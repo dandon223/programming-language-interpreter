@@ -1,5 +1,3 @@
-
-
 #ifndef TKOM_21Z_DANIEL_DATE_H
 #define TKOM_21Z_DANIEL_DATE_H
 #include <string>
@@ -13,6 +11,16 @@ public:
     Date(int y, int m, int d);
     std::string toString();
 
+};
+
+class TimeDiff{
+private:
+    int year=0;
+    int month=0;
+    int day =0;
+public:
+    TimeDiff(int y,int m,int d);
+    std::string toString();
 };
 
 

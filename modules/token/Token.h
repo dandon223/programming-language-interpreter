@@ -6,6 +6,7 @@
 #include <variant>
 #include <string>
 #include <unordered_map>
+#include "../structures/Date.h"
 
 enum class TokenType
 {
@@ -42,6 +43,9 @@ enum class TokenType
     Indentation = 30,
     Id = 31,
     Number = 32,
+    DateValue = 33,
+    TimeDiffValue = 34,
+    StringValue = 35
 
 };
 const std::unordered_map<int, std::string> print = {
@@ -79,6 +83,9 @@ const std::unordered_map<int, std::string> print = {
         {30, "Indentation"},
         {31, "Id"},
         {32, "Number"},
+        {33, "DateValue"},
+        {34, "TimeDiffValue"},
+        {35, "StringValue"},
 };
 const std::unordered_map<std::string, TokenType> map = {
 
@@ -114,7 +121,7 @@ const std::unordered_map<std::string, TokenType> map = {
 struct Token
 {
     TokenType type;
-    std::variant<int, std::string,double> value;
+    std::variant<int, std::string,double,Date,TimeDiff> value;
     int line_number ;
     int column_number ;
 };
@@ -123,8 +130,10 @@ struct TokenGet {
     std::string operator()(int value) { return std::to_string(value); }
     std::string operator()(std::string value) { return value;}
     std::string operator()(double value) { return std::to_string(value); }
+    std::string operator()(Date value) { return value.toString(); }
+    std::string operator()(TimeDiff value) { return value.toString(); }
 };
-std::string TokenValueToString(const std::variant<int, std::string,double>& input);
+std::string TokenValueToString(const std::variant<int, std::string,double,Date,TimeDiff>& input);
 std::string getStringToken(struct Token token);
 
 #endif //TKOM_21Z_DANIEL_TOKEN_H
