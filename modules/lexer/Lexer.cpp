@@ -2,7 +2,7 @@
 
 #include "Lexer.h"
 #include "../structures/Date.h"
-//#include "../structures/Date.cpp"
+#include "../errorHandler/ErrorHandler.h"
 Lexer::Lexer(std::istream &my_handle) : handle(my_handle){
     getNextChar();
 }
@@ -41,6 +41,7 @@ Token Lexer::getNextToken(){
     active_token.value = "Invalid character.";
     active_token.line_number = line;
     active_token.column_number = column;
+    active_token.start_pos = handle.tellg();
 
     if(getIndentation())
         return active_token;
@@ -89,10 +90,12 @@ bool Lexer::getTimeDiff() {
     getNextChar();
     if(!isdigit(current_char)){
         active_token.value ="No digit after {";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     if(current_char == '0' && isdigit(peekNextChar())){
         active_token.value ="Leading zeros in number.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     for(int i=0 ; i <4 ;i++){
@@ -103,10 +106,12 @@ bool Lexer::getTimeDiff() {
     }
     if(isdigit(current_char)){
         active_token.value ="Only up to 4 digits allowed for years.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     if(current_char != 'y'){
         active_token.value ="No 'y' after int.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     getNextChar();
@@ -119,10 +124,12 @@ bool Lexer::getTimeDiff() {
     }
     if(isdigit(current_char)){
         active_token.value ="Only up to 2 digits allowed for months.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     if(current_char != 'm'){
         active_token.value ="No 'm' after int.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     getNextChar();
@@ -135,15 +142,18 @@ bool Lexer::getTimeDiff() {
     }
     if(isdigit(current_char)){
         active_token.value ="Only up to 2 digits allowed for days.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     if(current_char != 'd'){
         active_token.value ="No 'd' after int.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     getNextChar();
     if(current_char != '}'){
         active_token.value ="No '}' after 'd'.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     getNextChar();
@@ -165,11 +175,13 @@ bool Lexer::getDate(){
     //}
     if(!isdigit(current_char)){
         active_token.value ="No digit after [";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     for(int i=0 ; i <4 ;i++){
         if(!isdigit(current_char)){
             active_token.value ="Need 4 digits for year";
+            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
             getNextChar();
             return true;
         }
@@ -178,12 +190,14 @@ bool Lexer::getDate(){
     }
     if(isdigit(current_char)){
         active_token.value ="Only 4 digits for year";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         getNextChar();
         return true;
     }
 
     if(current_char!=':'){
         active_token.value ="No : after year.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         getNextChar();
         return true;
     }
@@ -191,6 +205,7 @@ bool Lexer::getDate(){
     for(int i=0 ; i <2 ;i++){
         if(!isdigit(current_char)){
             active_token.value ="Need 2 digits for month";
+            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
             getNextChar();
             return true;
         }
@@ -199,11 +214,13 @@ bool Lexer::getDate(){
     }
     if(isdigit(current_char)){
         active_token.value ="Only 2 digits for month";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         getNextChar();
         return true;
     }
     if(current_char!=':'){
         active_token.value ="No : after month.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         getNextChar();
         return true;
     }
@@ -211,6 +228,7 @@ bool Lexer::getDate(){
     for(int i=0 ; i <2 ;i++){
         if(!isdigit(current_char)){
             active_token.value ="Need 2 digits for day";
+            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
             getNextChar();
             return true;
         }
@@ -219,11 +237,13 @@ bool Lexer::getDate(){
     }
     if(isdigit(current_char)){
         active_token.value ="Only 2 digits for day.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         getNextChar();
         return true;
     }
     if(current_char!= ']'){
         active_token.value ="No ] after day";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         getNextChar();
         return true;
     }
@@ -241,6 +261,7 @@ bool Lexer::getNumber() {
         while(isdigit(current_char))
             getNextChar();
         active_token.value = "No numbers before comma.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
     if (!isdigit(current_char))
@@ -249,6 +270,7 @@ bool Lexer::getNumber() {
     getNextChar();
     if(number == "0" && isdigit(current_char)){
         active_token.value = "Leading zeros in number.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         while(isdigit(current_char))
             getNextChar();
         if(current_char == '.'){
@@ -270,6 +292,7 @@ bool Lexer::getNumber() {
             return true;
         }catch (const std::exception& out_of_range){
             active_token.value = "Value overflow.";
+            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
             return true;
         }
     }else{
@@ -286,6 +309,7 @@ bool Lexer::getNumber() {
             return true;
         }catch (const std::exception& out_of_range){
             active_token.value = "Value overflow.";
+            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
             return true;
         }
     }
@@ -302,6 +326,7 @@ bool Lexer::getString() {
         if(current_char == EOF){
             active_token.type = TokenType::Invalid;
             active_token.value = "No ending \" for string.";
+            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
             getNextChar();
             return true;
         }
@@ -401,6 +426,7 @@ bool Lexer::getIndentation(){
 
         active_token.type = TokenType::Invalid;
         active_token.value = "spacebar after indentation";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
 
@@ -408,4 +434,13 @@ bool Lexer::getIndentation(){
     active_token.type = TokenType::Indentation;
     active_token.value = number_of_indentation;
     return true;
+}
+std::string Lexer::getWholeLine(std::streampos &getFrom)
+{
+    const std::streampos curr_pos = handle.tellg();
+    std::string line_local;
+    handle.seekg(getFrom);
+    std::getline(handle, line_local);
+    handle.seekg(curr_pos);
+    return line_local;
 }

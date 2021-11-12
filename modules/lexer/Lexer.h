@@ -37,6 +37,7 @@ public:
     void getNextChar();
     bool endOfFile();
     void printStream();
+    std::string getWholeLine(std::streampos &getFrom);
 };
 
 

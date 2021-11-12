@@ -124,6 +124,7 @@ struct Token
     std::variant<int, std::string,double,Date,TimeDiff> value;
     int line_number ;
     int column_number ;
+    std::streampos start_pos;
 };
 
 struct TokenGet {
