@@ -16,6 +16,7 @@ private:
     std::istream &handle;
     bool end_of_file = false;
     bool first_line = true;
+    bool first_indentation = true;
     char current_char;
     Token active_token;
 

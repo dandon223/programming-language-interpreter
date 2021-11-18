@@ -4,7 +4,6 @@
 #include "../structures/Date.h"
 #include "../errorHandler/ErrorHandler.h"
 Lexer::Lexer(std::istream &my_handle) : handle(my_handle){
-
     active_token.start_pos = handle.tellg();
     getNextChar();
 }
@@ -174,7 +173,6 @@ bool Lexer::parseTimeDiff() {
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
-    active_token.start_pos = handle.tellg();
     getNextChar();
 
     TimeDiff timeDiff = TimeDiff(year,month,day);
@@ -272,7 +270,6 @@ bool Lexer::parseDate(){
         return true;
     }
     length++;
-    active_token.start_pos = handle.tellg();
     getNextChar();
     Date date = Date(year,month,day);
     active_token.type = TokenType::DateValue;
@@ -371,7 +368,6 @@ bool Lexer::parseString() {
         active_token.type = TokenType::StringValue;
         active_token.value = word;
         active_token.length = word.length();
-        active_token.start_pos = handle.tellg();
         getNextChar();
         return true;
     }
@@ -436,13 +432,12 @@ bool Lexer::parseOperators() {
     active_token.type = map.at(std::string(1,current_char));
     active_token.value = std::string(1,current_char);
     active_token.length = 1;
-    active_token.start_pos = handle.tellg();
     getNextChar();
     return true;
 }
 bool Lexer::parseIndentation(){
 
-    if(current_char != '\n' && !first_line){
+    if(current_char != '\n' && !first_indentation){
         return false;
     }
     while(current_char == '\n'){
@@ -454,7 +449,8 @@ bool Lexer::parseIndentation(){
         getNextChar();
         active_token.line_number = line;
     }
-    first_line = false;
+    if(line >1)
+        first_line = false;
     if(current_char == '\t')
         active_token.column_number = 0;
     while(current_char == '\n'){
@@ -473,27 +469,28 @@ bool Lexer::parseIndentation(){
     if(current_char == ' '){
         active_token.line_number = line;
         active_token.column_number = column;
-        while(current_char == ' '){
-            active_token.start_pos = handle.tellg();
+        while(current_char == ' ' || current_char == '\t'){
             getNextChar();
         }
 
         active_token.type = TokenType::Invalid;
         active_token.value = "spacebar after indentation";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
+        first_indentation = false;
         return true;
     }
 
     active_token.type = TokenType::Indentation;
     active_token.value = number_of_indentation;
     active_token.length = number_of_indentation*4;
+    first_indentation = false;
     return true;
 }
 std::string Lexer::getWholeLine(std::streampos &getFrom)
 {
     const std::streampos curr_pos = handle.tellg();
     std::string line_local;
-    handle.seekg(getFrom -std::streamoff(3));
+    handle.seekg(getFrom);
     std::getline(handle, line_local);
     handle.seekg(curr_pos );
     return line_local;
