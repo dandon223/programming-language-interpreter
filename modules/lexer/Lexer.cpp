@@ -1,9 +1,11 @@
 
-
+#include <cmath>
 #include "Lexer.h"
 #include "../structures/Date.h"
 #include "../errorHandler/ErrorHandler.h"
 Lexer::Lexer(std::istream &my_handle) : handle(my_handle){
+
+    active_token.start_pos = handle.tellg();
     getNextChar();
 }
 void Lexer::getNextChar()
@@ -32,8 +34,9 @@ Token Lexer::getNextToken(){
     active_token.value = "Invalid character.";
     active_token.line_number = line;
     active_token.column_number = column;
-
-    active_token.start_pos = handle.tellg();
+    active_token.length = 0;
+    if(!first_line)
+        active_token.start_pos = handle.tellg();
 
     if(parseIndentation())
         return active_token;
@@ -58,7 +61,6 @@ Token Lexer::getNextToken(){
         active_token.value = 0;
         return active_token;
     }
-    active_token.start_pos = handle.tellg();
     getNextChar();
     return active_token;
 }
@@ -75,12 +77,15 @@ bool Lexer::ignore_comment(){
     return false;
 }
 bool Lexer::parseTimeDiff() {
+    int length = 0;
     if(current_char !='{')
         return false;
+    length++;
     int year = 0;
     int month = 0;
     int day = 0;
     getNextChar();
+    length++;
     if(!isdigit(current_char)){
         active_token.value ="No digit after {";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
@@ -95,6 +100,7 @@ bool Lexer::parseTimeDiff() {
     }
     for(int i=0 ; i <4 ;i++){
         if(isdigit(current_char)){
+            length++;
             year = year * 10 + current_char - '0';
             getNextChar();
         }
@@ -109,6 +115,7 @@ bool Lexer::parseTimeDiff() {
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         return true;
     }
+    length++;
     getNextChar();
     if(current_char == '0' && isdigit(peekNextChar())){
         active_token.value ="Leading zeros in number after y.";
@@ -119,6 +126,7 @@ bool Lexer::parseTimeDiff() {
     }
     for(int i=0 ; i <2 ;i++){
         if(isdigit(current_char)){
+            length++;
             month = month * 10 + current_char - '0';
             getNextChar();
         }
@@ -134,6 +142,7 @@ bool Lexer::parseTimeDiff() {
         return true;
     }
     getNextChar();
+    length++;
     if(current_char == '0' && isdigit(peekNextChar())){
         active_token.value ="Leading zeros in number after m.";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
@@ -143,6 +152,7 @@ bool Lexer::parseTimeDiff() {
     }
     for(int i=0 ; i <2 ;i++){
         if(isdigit(current_char)){
+            length++;
             day = day * 10 + current_char - '0';
             getNextChar();
         }
@@ -158,6 +168,7 @@ bool Lexer::parseTimeDiff() {
         return true;
     }
     getNextChar();
+    length++;
     if(current_char != '}'){
         active_token.value ="No '}' after 'd'.";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
@@ -169,18 +180,18 @@ bool Lexer::parseTimeDiff() {
     TimeDiff timeDiff = TimeDiff(year,month,day);
     active_token.type = TokenType::TimeDiffValue;
     active_token.value = timeDiff;
+    active_token.length = length;
     return true;
 }
 bool Lexer::parseDate(){
+    int length = 0;
     if(current_char != '[')
         return false;
+    length++;
     int year = 0;
     int month = 0;
     int day = 0;
     getNextChar();
-    //while(current_char ==' ' || current_char =='\t'){
-     //   getNextChar();
-    //}
     if(!isdigit(current_char)){
         active_token.value ="No digit after [";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
@@ -193,6 +204,7 @@ bool Lexer::parseDate(){
             getNextChar();
             return true;
         }
+        length++;
         year = year * 10 + current_char - '0';
         getNextChar();
     }
@@ -209,6 +221,7 @@ bool Lexer::parseDate(){
         getNextChar();
         return true;
     }
+    length++;
     getNextChar();
     for(int i=0 ; i <2 ;i++){
         if(!isdigit(current_char)){
@@ -217,6 +230,7 @@ bool Lexer::parseDate(){
             getNextChar();
             return true;
         }
+        length++;
         month = month * 10 + current_char - '0';
         getNextChar();
     }
@@ -232,6 +246,7 @@ bool Lexer::parseDate(){
         getNextChar();
         return true;
     }
+    length++;
     getNextChar();
     for(int i=0 ; i <2 ;i++){
         if(!isdigit(current_char)){
@@ -240,6 +255,7 @@ bool Lexer::parseDate(){
             getNextChar();
             return true;
         }
+        length++;
         day = day * 10 + current_char - '0';
         getNextChar();
     }
@@ -255,16 +271,19 @@ bool Lexer::parseDate(){
         getNextChar();
         return true;
     }
+    length++;
     active_token.start_pos = handle.tellg();
     getNextChar();
     Date date = Date(year,month,day);
     active_token.type = TokenType::DateValue;
     active_token.value = date;
+    active_token.length = length;
     return true;
 }
 bool Lexer::parseNumber() {
+    int length = 0;
     active_token.type = TokenType::Invalid;
-    std::string number;
+    double tempNumber = 0;
     if(current_char =='.' && isdigit(peekNextChar())){
         active_token.value = "No numbers before comma.";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
@@ -273,48 +292,64 @@ bool Lexer::parseNumber() {
     }
     if (!isdigit(current_char))
         return false;
-    number += current_char;
+    tempNumber = current_char - '0';
+    length++;
     getNextChar();
-    if(number == "0" && isdigit(current_char)){
+    if(tempNumber == 0 && isdigit(current_char)){
         active_token.value = "Leading zeros in number.";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
         getNextChar();
         return true;
     }
-    while (isdigit(current_char)){
-        number +=current_char;
-        active_token.start_pos = handle.tellg();
+
+    while(isdigit(current_char)){
+        if (tempNumber * 10 + 1 > std::numeric_limits<double>::max() / 10)
+        {
+            active_token.value = "Value overflow.";
+            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
+            return true;
+        }
+        length++;
+        tempNumber = tempNumber * 10 + current_char - '0';
         getNextChar();
     }
+    if(isalpha(current_char)){
+        active_token.value = "Char after number.";
+        ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
+        return true;
+    }
     if(current_char != '.'){
-        try{
-            int number_from_stoi = std::stoi(number);
-            active_token.type = TokenType::Number;
-            active_token.value = number_from_stoi;
-            return true;
-        }catch (const std::exception& out_of_range){
-            active_token.value = "Value overflow.";
+        if (tempNumber > std::numeric_limits<int>::max())
+        {
+            active_token.value = "Int value overflow.";
             ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
-            getNextChar();
             return true;
         }
+        active_token.type = TokenType::Number;
+        active_token.value = (int) tempNumber;
+        active_token.length = length;
+        return true;
     }else{
-        number +='.';
+        int positions_after_comma = 0;
         getNextChar();
+        length++;
         while(isdigit(current_char)){
-            number +=current_char;
+            if (tempNumber * 10 + 1 > std::numeric_limits<double>::max() / 10)
+            {
+                active_token.value = "Double value overflow.";
+                ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
+                return true;
+            }
+            length++;
+            positions_after_comma++;
+            tempNumber = tempNumber * 10 + current_char - '0';
             getNextChar();
         }
-        try{
-            double number_from_stod = std::stod(number);
-            active_token.type = TokenType::Number;
-            active_token.value = number_from_stod;
-            return true;
-        }catch (const std::exception& out_of_range){
-            active_token.value = "Value overflow.";
-            ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
-            return true;
-        }
+        tempNumber = tempNumber / std::pow(10,positions_after_comma);
+        active_token.type = TokenType::Number;
+        active_token.length = length;
+        active_token.value =tempNumber;
+        return true;
     }
 }
 bool Lexer::parseString() {
@@ -335,6 +370,7 @@ bool Lexer::parseString() {
         }
         active_token.type = TokenType::StringValue;
         active_token.value = word;
+        active_token.length = word.length();
         active_token.start_pos = handle.tellg();
         getNextChar();
         return true;
@@ -361,6 +397,7 @@ bool Lexer::parseKeywordOrId() {
 
         active_token.type = map.at(word);
         active_token.value = word;
+        active_token.length = word.size();
         getNextChar();
         while(current_char ==' ' || current_char =='\t')
             getNextChar();
@@ -369,6 +406,7 @@ bool Lexer::parseKeywordOrId() {
 
     active_token.value = word;
     active_token.type = TokenType::Id;
+    active_token.length = word.size();
     getNextChar();
     while(current_char ==' ' || current_char =='\t'){
         active_token.start_pos = handle.tellg();
@@ -388,6 +426,7 @@ bool Lexer::parseOperators() {
         word += current_char;
         active_token.type = map.at(word);
         active_token.value = word;
+        active_token.length = 2;
         getNextChar();
         return true;
     }
@@ -396,6 +435,7 @@ bool Lexer::parseOperators() {
 
     active_token.type = map.at(std::string(1,current_char));
     active_token.value = std::string(1,current_char);
+    active_token.length = 1;
     active_token.start_pos = handle.tellg();
     getNextChar();
     return true;
@@ -446,13 +486,14 @@ bool Lexer::parseIndentation(){
 
     active_token.type = TokenType::Indentation;
     active_token.value = number_of_indentation;
+    active_token.length = number_of_indentation*4;
     return true;
 }
 std::string Lexer::getWholeLine(std::streampos &getFrom)
 {
     const std::streampos curr_pos = handle.tellg();
     std::string line_local;
-    handle.seekg(getFrom -std::streamoff(1));
+    handle.seekg(getFrom -std::streamoff(3));
     std::getline(handle, line_local);
     handle.seekg(curr_pos );
     return line_local;

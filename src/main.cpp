@@ -11,7 +11,6 @@ int main()
     ifst.open("../input.txt",std::ios::in);
 
     std::istream handle(&ifst);
-
     Lexer lexer = Lexer(handle);
    while(!lexer.endOfFile())
        std::cout << getStringToken(lexer.getNextToken()) <<"\n";

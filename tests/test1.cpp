@@ -422,9 +422,6 @@ BOOST_AUTO_TEST_CASE( Lesser_or_equal_than )
         BOOST_CHECK(tokens[2].type == TokenType::End_of_text);
         BOOST_CHECK(tokens.size() == 3);
     }
-BOOST_AUTO_TEST_SUITE_END()
-
-BOOST_AUTO_TEST_SUITE(Examples)
     BOOST_AUTO_TEST_CASE( DateAndTimeDiff ){
         std::string text = "date a [2000:10:09]\n"
                            "date b [1999:01:05]\n"

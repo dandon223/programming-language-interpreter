@@ -12,6 +12,6 @@ include_directories(
 
 add_executable(tkom_21z_daniel ${TARGET_SRC} )
 
-target_compile_options(tkom_21z_daniel PUBLIC -Werror -Wall -Wextra -g)
+target_compile_options(tkom_21z_daniel PUBLIC -Werror -Wall )
 
-add_subdirectory(tests)
+#add_subdirectory(tests)

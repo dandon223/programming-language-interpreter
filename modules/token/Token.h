@@ -125,6 +125,7 @@ struct Token
     int line_number ;
     int column_number ;
     std::streampos start_pos;
+    int length = 0;
 };
 
 struct TokenGet {
