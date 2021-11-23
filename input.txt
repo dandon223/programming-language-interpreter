@@ -1,3 +1,2 @@
-fun int int():
-	date a = [1999:01:01]
-	return 1
+int a int b
+int c

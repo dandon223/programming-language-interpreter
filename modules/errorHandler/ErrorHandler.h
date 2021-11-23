@@ -13,6 +13,7 @@ public:
     ErrorHandler &operator=(const ErrorHandler &) = delete;
     ErrorHandler &operator=(ErrorHandler &) = delete;
     static void printLexerError(Token token , std::string line);
+    static void printParserError(Token token , std::string line);
 };
 
 
