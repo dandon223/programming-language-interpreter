@@ -16,10 +16,10 @@ int main()
 //   while(!lexer.endOfFile())
 //       std::cout << getStringToken(lexer.getNextToken()) <<"\n";
     Parser parser = Parser(lexer);
-    std::optional<Program> program = parser.TryToParseProgram();
+    std::shared_ptr<Program> program = parser.TryToParseProgram();
     if(program){
         PrintVisitor *printVisitor = new PrintVisitor();
-        program.value().accept(printVisitor);
+        program->accept(printVisitor);
         std::cout<< printVisitor->debug;
     }
 

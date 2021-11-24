@@ -8,9 +8,11 @@
 #include <string>
 #include <iostream>
 #include <algorithm>
+#include <memory>
 class Declaration;
 class VariableDeclr;
 class Expression;
+class IExpression;
 class AdvExpression;
 class BasicExpression;
 class Program;
@@ -34,10 +36,14 @@ class Visitor
 {
 public:
     virtual void visit(Declaration *element) = 0;
+    virtual void visit(std::shared_ptr<Declaration> element) = 0;
     virtual void visit(VariableDeclr *element) = 0;
     virtual void visit(Expression *element) = 0;
+    virtual void visit(std::shared_ptr<Expression> element) = 0;
     virtual void visit(AdvExpression *element) = 0;
+    virtual void visit(std::shared_ptr<AdvExpression> element) = 0;
     virtual void visit(BasicExpression *element) = 0;
+    virtual void visit(std::shared_ptr<BasicExpression> element) = 0;
     virtual void visit(Program *element) = 0;
 };
 
@@ -46,7 +52,13 @@ class INode
 public:
     virtual void accept(Visitor *v) = 0;
 };
-class VariableDeclr : INode
+class IExpression
+{
+public:
+    virtual void accept(Visitor &v){};
+};
+
+class VariableDeclr : public INode
 {
 public:
     std::string id;
@@ -60,27 +72,40 @@ public:
     std::string getId(){return id;}
     TypeOfData getTypeOfData(){return typeOfData;}
 };
-class Expression : INode
+class AdvExpression :public IExpression, public std::enable_shared_from_this<AdvExpression>
 {
 public:
-    std::vector<std::string> operationType;
-    std::vector<AdvExpression> left;
-    std::vector<AdvExpression> right;
-    Expression(){};
-    Expression(std::vector<std::string> _operationType, std::vector<AdvExpression> _left,
-               std::vector<AdvExpression> _right) : operationType(_operationType), left(_left), right(_right){};
-    void accept(Visitor *visitor) override
-    {
-        visitor->visit(this);
-    };
+    std::string operationType;
+    std::shared_ptr<IExpression> left;
+    std::shared_ptr<IExpression> right;
+    AdvExpression(){};
+    AdvExpression(std::string _operationType, std::shared_ptr<IExpression> _left, std::shared_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
+    void accept(Visitor &v) override {
+        std::shared_ptr<AdvExpression> p{shared_from_this()};
+        v.visit(p);
+    }
 };
-class Declaration : INode
+class Expression : public IExpression, public std::enable_shared_from_this<Expression>
+{
+public:
+    std::string operationType;
+    std::shared_ptr<IExpression> left;
+    std::shared_ptr<IExpression> right;
+    Expression(){};
+    Expression(std::string _operationType, std::shared_ptr<IExpression> _left) : operationType(_operationType), left(std::move(_left)){};
+    Expression(std::string _operationType, std::shared_ptr<IExpression> _left, std::shared_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
+    void accept(Visitor &v) override {
+        std::shared_ptr<Expression> p{shared_from_this()};
+        v.visit(p);
+    }
+};
+class Declaration : public INode
 {
 public:
     VariableDeclr var;
-    std::optional<Expression> assignable;
+    std::shared_ptr<IExpression> assignable;
     Declaration(){};
-    Declaration(VariableDeclr _var, std::optional<Expression> _assignable) : var(_var), assignable(_assignable) {}
+    Declaration(VariableDeclr _var, std::shared_ptr<IExpression> _assignable) : var(_var), assignable(std::move(_assignable)) {}
     void accept(Visitor *visitor) override
     {
         visitor->visit(this);
@@ -88,44 +113,37 @@ public:
 
 };
 
-class AdvExpression : INode
-{
-public:
-    std::vector<std::string> operationType;
-    std::vector<BasicExpression> left;
-    std::vector<BasicExpression> right;
-    AdvExpression(){};
-    AdvExpression(std::vector<std::string> _operationType, std::vector<BasicExpression> _left,
-                  std::vector<BasicExpression> _right) : operationType(_operationType), left(_left), right(_right){};
-    void accept(Visitor *visitor) override
-    {
-        visitor->visit(this);
-    };
+struct BasicGet {
+    std::string operator()(int value) { return std::to_string(value); }
+    std::string operator()(std::string value) { return value;}
 };
-class BasicExpression : INode
+class BasicExpression :public IExpression, public std::enable_shared_from_this<BasicExpression>
 {
 public:
-    std::variant<int> basic;
+    std::variant<int,std::string> basic;
     bool wasMinus;
     BasicExpression(){};
-    BasicExpression(std::variant<int> _basic, bool _wasMinus) : basic(_basic), wasMinus(_wasMinus){};
-    void accept(Visitor *visitor) override
-    {
-        visitor->visit(this);
-    };
+    BasicExpression(std::variant<int,std::string> _basic, bool _wasMinus) : basic(_basic), wasMinus(_wasMinus){};
+    void accept(Visitor &v) override {
+        std::shared_ptr<BasicExpression> p{shared_from_this()};
+        v.visit(p);
+    }
+    std::string ValueToString(){
+        return std::visit(BasicGet{}, basic);
+    }
 };
 
-class Program : INode
+class Program : public INode
 {
 public:
-    std::vector<Declaration> declarations;
+    std::vector<std::shared_ptr<Declaration>> declarations;
     Program(){};
-    Program(std::vector<Declaration> _declarations) : declarations(_declarations){};
+    Program(std::vector<std::shared_ptr<Declaration>> _declarations) : declarations(std::move(_declarations)){};
     void accept(Visitor *visitor) override
     {
         visitor->visit(this);
     };
-    std::vector<Declaration> getDeclarations(){return declarations;}
+    std::vector<std::shared_ptr<Declaration>> getDeclarations(){return declarations;}
 };
 
 class PrintVisitor : public Visitor{
@@ -133,20 +151,21 @@ public:
     std::string debug;
     void visit(Declaration *element) override
     {
-        debug += " entered Declaration\n";
+        debug += "entered Declaration\n";
         visit(&(element->var));
     };
     void visit(VariableDeclr *element) override
     {
-        debug += " entered VariableDeclr\n";
+        debug += "entered VariableDeclr\n";
         debug += "\tType of data: " + TypeOfDataToString.at(static_cast<const int>(element->getTypeOfData())) + "\n" ;
         debug += "\tId: " + element->getId()+"\n";
+        debug += "exited VariableDeclr\n";
 
     };
     void visit(Program *element) override
     {
-        for(auto declaration : element->declarations)
-            visit(&declaration);
+        for(auto &declaration : element->declarations)
+            visit(declaration);
     };
     void visit(Expression *element) override{
 
@@ -154,9 +173,58 @@ public:
     void visit(AdvExpression *element) override{
 
     } ;
-    void visit(BasicExpression *element) override{
+    void visit(BasicExpression* element) override{
 
     };
+
+    void visit(std::shared_ptr<AdvExpression> element) override{
+        debug += "entered AdvExpression\n";
+    };
+    void visit(std::shared_ptr<Expression> element) override{
+        debug += "entered Expression\n";
+        auto sq = std::dynamic_pointer_cast<BasicExpression>(element->left);
+        if(sq)
+            visit(sq);
+        else if(auto s = std::dynamic_pointer_cast<AdvExpression>(element->left))
+            visit(s);
+        else if(auto x = std::dynamic_pointer_cast<Expression>(element->left))
+            visit(x);
+        debug += "Operator: " +element->operationType+"\n";
+        auto a = std::dynamic_pointer_cast<BasicExpression>(element->right);
+        if(a)
+            visit(a);
+        else if(auto s = std::dynamic_pointer_cast<AdvExpression>(element->right))
+            visit(s);
+        else if(auto x = std::dynamic_pointer_cast<Expression>(element->right))
+            visit(x);
+        debug += "exited Expression\n";
+    };
+    void visit(std::shared_ptr<BasicExpression> element) override{
+        debug += "entered BasicExpression\n";
+        if(element->wasMinus)
+            debug += "\tIs Minus = true\n";
+        else
+            debug += "\tIs Minus = false\n";
+        debug += "\tValue:"+ element->ValueToString()+"\n";
+        debug += "exited BasicExpression\n";
+
+    };
+    void visit(std::shared_ptr<Declaration> element) override{
+        debug += "entered Declaration\n";
+        visit(&(element->var));
+        auto sq = std::dynamic_pointer_cast<BasicExpression>(element->assignable);
+        if(sq)
+            visit(sq);
+        else if(auto s = std::dynamic_pointer_cast<AdvExpression>(element->assignable))
+            visit(s);
+        else if(auto x = std::dynamic_pointer_cast<Expression>(element->assignable))
+            visit(x);
+        debug += "exited Declaration\n";
+
+    };
+//    void visit(std::shared_ptr<IExpression> element) override{
+//        debug += "Smuteczel\n";
+//    };
 
 
 };
