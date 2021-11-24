@@ -80,25 +80,24 @@ std::shared_ptr<IExpression> Parser::TryToParseAdvancedExpression()
 {
 
     std::string my_operator;
-    auto left = parseBasicExpression();
+    auto left = TryToParseBasicExpression();
     if (left == nullptr)
         return nullptr;
     while (currentToken.type == TokenType::Multiply || currentToken.type == TokenType::Divide)
     {
-        left = std::dynamic_pointer_cast<AdvExpression>(left);
         my_operator = getOperatorType();
         getNextToken();
-        auto right = parseBasicExpression();
+        auto right = TryToParseBasicExpression();
         if(right == nullptr)
             ErrorHandler::printParserError(currentToken, "no expression after "+my_operator);
         left = CreateAdvExpression(my_operator,std::move(left),std::move(right));
     }
     return left;
 }
-std::shared_ptr<IExpression> Parser::parseBasicExpression()
+std::shared_ptr<IExpression> Parser::TryToParseBasicExpression()
 {
 
-    std::variant<int,std::string> basic;
+    std::variant<int,double,std::string> basic;
     bool wasMinus = false;
     if (currentToken.type == TokenType::Minus)
     {
@@ -110,7 +109,10 @@ std::shared_ptr<IExpression> Parser::parseBasicExpression()
     }
     else if (currentToken.type == TokenType::Number)
     {
-        basic = std::get<int>(currentToken.value);
+        if(currentToken.value.index()==0)
+            basic = std::get<int>(currentToken.value);
+        else
+            basic = std::get<double>(currentToken.value);
         getNextToken();
         return std::make_shared<BasicExpression>(BasicExpression(basic, wasMinus));
     }

@@ -22,7 +22,7 @@ private:
     std::shared_ptr<Declaration>TryToParseVariableDeclaration();
     std::shared_ptr<IExpression>TryToParseExpression();
     std::shared_ptr<IExpression> TryToParseAdvancedExpression();
-    std::shared_ptr<IExpression> parseBasicExpression();
+    std::shared_ptr<IExpression> TryToParseBasicExpression();
     TypeOfData getTypeOfData(TokenType type);
     std::string getOperatorType();
     std::shared_ptr<Expression>CreateExpression(std::string basicString, std::shared_ptr<IExpression> expression, std::shared_ptr<IExpression> expression1);
