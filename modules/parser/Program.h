@@ -38,11 +38,8 @@ public:
     virtual void visit(Declaration *element,int indentation) = 0;
     virtual void visit(std::shared_ptr<Declaration> element,int indentation) = 0;
     virtual void visit(VariableDeclr *element,int indentation) = 0;
-    virtual void visit(Expression *element) = 0;
     virtual void visit(std::shared_ptr<Expression> element,int indentation) = 0;
-    virtual void visit(AdvExpression *element) = 0;
     virtual void visit(std::shared_ptr<AdvExpression> element,int indentation) = 0;
-    virtual void visit(BasicExpression *element) = 0;
     virtual void visit(std::shared_ptr<BasicExpression> element, int indentation) = 0;
     virtual void visit(Program *element,int indentation) = 0;
 };
@@ -50,7 +47,7 @@ public:
 class INode
 {
 public:
-    virtual void accept(Visitor *v,int indentation) = 0;
+    virtual void accept(Visitor &v,int indentation) = 0;
 };
 class IExpression
 {
@@ -63,9 +60,9 @@ class VariableDeclr : public INode
 public:
     std::string id;
     TypeOfData typeOfData;
-    void accept(Visitor *visitor,int indentation) override
+    void accept(Visitor &visitor,int indentation) override
     {
-        visitor->visit(this,indentation);
+        visitor.visit(this,indentation);
     };
     VariableDeclr(){};
     VariableDeclr(std::string _id, TypeOfData _typeOfData) : id(_id), typeOfData(_typeOfData){};
@@ -106,9 +103,9 @@ public:
     std::shared_ptr<IExpression> assignable;
     Declaration(){};
     Declaration(VariableDeclr _var, std::shared_ptr<IExpression> _assignable) : var(_var), assignable(std::move(_assignable)) {}
-    void accept(Visitor *visitor,int indentation) override
+    void accept(Visitor &visitor,int indentation) override
     {
-        visitor->visit(this,indentation);
+        visitor.visit(this,indentation);
     };
 
 };
@@ -141,9 +138,9 @@ public:
     std::vector<std::shared_ptr<Declaration>> declarations;
     Program(){};
     Program(std::vector<std::shared_ptr<Declaration>> _declarations) : declarations(std::move(_declarations)){};
-    void accept(Visitor *visitor,int indentation) override
+    void accept(Visitor &visitor,int indentation) override
     {
-        visitor->visit(this,indentation);
+        visitor.visit(this,indentation);
     };
     std::vector<std::shared_ptr<Declaration>> getDeclarations(){return declarations;}
 };
@@ -170,15 +167,6 @@ public:
     {
         for(auto &declaration : element->declarations)
             visit(declaration,indentation);
-    };
-    void visit(Expression *element) override{
-
-    };
-    void visit(AdvExpression *element) override{
-
-    } ;
-    void visit(BasicExpression* element) override{
-
     };
 
     void visit(std::shared_ptr<AdvExpression> element,int indentation) override{
