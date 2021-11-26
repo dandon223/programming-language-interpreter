@@ -14,19 +14,19 @@ private:
     Lexer lex;
 public:
     Parser(Lexer lexer);
-    std::shared_ptr<Program>TryToParseProgram();
+    std::unique_ptr<Program>TryToParseProgram();
 private:
     void getNextToken();
     void expect(TokenType ttype, std::string message);
     void expect_and_accept(TokenType ttype, std::string message);
-    std::shared_ptr<Declaration>TryToParseVariableDeclaration();
-    std::shared_ptr<IExpression>TryToParseExpression();
-    std::shared_ptr<IExpression> TryToParseAdvancedExpression();
-    std::shared_ptr<IExpression> TryToParseBasicExpression();
+    std::unique_ptr<Declaration>TryToParseVariableDeclaration();
+    std::unique_ptr<IExpression>TryToParseExpression();
+    std::unique_ptr<IExpression> TryToParseAdvancedExpression();
+    std::unique_ptr<IExpression> TryToParseBasicExpression();
     TypeOfData getTypeOfData(TokenType type);
     std::string getOperatorType();
-    std::shared_ptr<Expression>CreateExpression(std::string basicString, std::shared_ptr<IExpression> expression, std::shared_ptr<IExpression> expression1);
-    std::shared_ptr<AdvExpression>CreateAdvExpression(std::string basicString, std::shared_ptr<IExpression> expression, std::shared_ptr<IExpression> expression1);
+    std::unique_ptr<Expression>CreateExpression(std::string basicString, std::unique_ptr<IExpression> expression, std::unique_ptr<IExpression> expression1);
+    std::unique_ptr<AdvExpression>CreateAdvExpression(std::string basicString, std::unique_ptr<IExpression> expression, std::unique_ptr<IExpression> expression1);
 };
 
 

@@ -11,18 +11,21 @@ void Parser::getNextToken()
 {
     currentToken = lex.getNextToken();
 }
-std::shared_ptr<Program> Parser::TryToParseProgram()
+std::unique_ptr<Program> Parser::TryToParseProgram()
 {
-    std::vector<std::shared_ptr<Declaration>> variable_declarations;
+    std::vector<std::unique_ptr<Declaration>> variable_declarations;
     std::cout << "Beginning Parsing\n";
+    expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
     while (auto s = TryToParseVariableDeclaration())
     {
-        if (s)
+        if (s){
             variable_declarations.push_back(std::move(s));
-        else
-        {
+        }
+        else{
             expect(TokenType::End_of_text, "no end of text in TryToParseProgram");
         }
+        if(currentToken.type != TokenType::End_of_text)
+            expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
     }
     if (!variable_declarations.empty()){
         std::cout << "Parsing Successfull\n";
@@ -30,17 +33,14 @@ std::shared_ptr<Program> Parser::TryToParseProgram()
     else{
         std::cout << "Parsing Unsuccessful\n";
     }
-    return std::make_shared<Program>(Program(variable_declarations));
+    return std::make_unique<Program>(Program(std::move(variable_declarations)));
 }
-std::shared_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
-    if(currentToken.type == TokenType::End_of_text)
-        return nullptr;
-    expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
-    if (currentToken.type != TokenType::Int || currentToken.type == TokenType::End_of_text)
+std::unique_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
+    if (currentToken.type != TokenType::Int)
         return nullptr;
 
     VariableDeclr var;
-    std::shared_ptr<IExpression> assignable;
+    std::unique_ptr<IExpression> assignable;
     var.typeOfData = getTypeOfData(currentToken.type);
     getNextToken();
 
@@ -58,9 +58,9 @@ std::shared_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
         ErrorHandler::printParserError(currentToken, "no expression after assign op in declaration");
         return nullptr;
     }
-    return std::make_shared<Declaration>(Declaration(var, std::move(assignable)));
+    return std::make_unique<Declaration>(Declaration(var, std::move(assignable)));
 }
-std::shared_ptr<IExpression> Parser::TryToParseExpression() {
+std::unique_ptr<IExpression> Parser::TryToParseExpression() {
     std::string my_operator;
     auto left = TryToParseAdvancedExpression();
     if (left == nullptr)
@@ -76,7 +76,7 @@ std::shared_ptr<IExpression> Parser::TryToParseExpression() {
     }
     return left;
 }
-std::shared_ptr<IExpression> Parser::TryToParseAdvancedExpression()
+std::unique_ptr<IExpression> Parser::TryToParseAdvancedExpression()
 {
 
     std::string my_operator;
@@ -94,7 +94,7 @@ std::shared_ptr<IExpression> Parser::TryToParseAdvancedExpression()
     }
     return left;
 }
-std::shared_ptr<IExpression> Parser::TryToParseBasicExpression()
+std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
 {
 
     std::variant<int,double,std::string> basic;
@@ -114,23 +114,23 @@ std::shared_ptr<IExpression> Parser::TryToParseBasicExpression()
         else
             basic = std::get<double>(currentToken.value);
         getNextToken();
-        return std::make_shared<BasicExpression>(BasicExpression(basic, wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
     }
     else if (currentToken.type == TokenType::StringValue){
         basic = std::get<std::string>(currentToken.value);
         getNextToken();
-        return std::make_shared<BasicExpression>(BasicExpression(basic, wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
     }
     return nullptr;
 
 }
-std::shared_ptr<Expression> Parser::CreateExpression(std::string my_operator, std::shared_ptr<IExpression> left, std::shared_ptr<IExpression> right) {
+std::unique_ptr<Expression> Parser::CreateExpression(std::string my_operator, std::unique_ptr<IExpression> left, std::unique_ptr<IExpression> right) {
 
-    return std::make_shared<Expression>(Expression(my_operator, std::move(left),std::move(right)));
+    return std::make_unique<Expression>(Expression(my_operator, std::move(left),std::move(right)));
 }
-std::shared_ptr<AdvExpression> Parser::CreateAdvExpression(std::string my_operator, std::shared_ptr<IExpression> left, std::shared_ptr<IExpression> right) {
+std::unique_ptr<AdvExpression> Parser::CreateAdvExpression(std::string my_operator, std::unique_ptr<IExpression> left, std::unique_ptr<IExpression> right) {
 
-    return std::make_shared<AdvExpression>(AdvExpression(my_operator, std::move(left),std::move(right)));
+    return std::make_unique<AdvExpression>(AdvExpression(my_operator, std::move(left),std::move(right)));
 }
 TypeOfData Parser::getTypeOfData(TokenType type){
     return TypeOfData::Integer;

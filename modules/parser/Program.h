@@ -72,10 +72,10 @@ class AdvExpression :public IExpression
 {
 public:
     std::string operationType;
-    std::shared_ptr<IExpression> left;
-    std::shared_ptr<IExpression> right;
+    std::unique_ptr<IExpression> left;
+    std::unique_ptr<IExpression> right;
     AdvExpression(){};
-    AdvExpression(std::string _operationType, std::shared_ptr<IExpression> _left, std::shared_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
+    AdvExpression(std::string _operationType, std::unique_ptr<IExpression> _left, std::unique_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
@@ -84,11 +84,11 @@ class Expression : public IExpression
 {
 public:
     std::string operationType;
-    std::shared_ptr<IExpression> left;
-    std::shared_ptr<IExpression> right;
+    std::unique_ptr<IExpression> left;
+    std::unique_ptr<IExpression> right;
     Expression(){};
-    Expression(std::string _operationType, std::shared_ptr<IExpression> _left) : operationType(_operationType), left(std::move(_left)){};
-    Expression(std::string _operationType, std::shared_ptr<IExpression> _left, std::shared_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
+    Expression(std::string _operationType, std::unique_ptr<IExpression> _left) : operationType(_operationType), left(std::move(_left)){};
+    Expression(std::string _operationType, std::unique_ptr<IExpression> _left, std::unique_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
@@ -97,9 +97,9 @@ class Declaration : public INode
 {
 public:
     VariableDeclr var;
-    std::shared_ptr<IExpression> assignable;
+    std::unique_ptr<IExpression> assignable;
     Declaration(){};
-    Declaration(VariableDeclr _var, std::shared_ptr<IExpression> _assignable) : var(_var), assignable(std::move(_assignable)) {}
+    Declaration(VariableDeclr _var, std::unique_ptr<IExpression> _assignable) : var(_var), assignable(std::move(_assignable)) {}
     void accept(Visitor &visitor,int indentation) override{};
 
 };
@@ -128,14 +128,14 @@ public:
 class Program : public INode
 {
 public:
-    std::vector<std::shared_ptr<Declaration>> declarations;
+    std::vector<std::unique_ptr<Declaration>> declarations;
     Program(){};
-    Program(std::vector<std::shared_ptr<Declaration>> _declarations) : declarations(std::move(_declarations)){};
+    Program(std::vector<std::unique_ptr<Declaration>> _declarations) : declarations(std::move(_declarations)){};
     void accept(Visitor &visitor,int indentation) override
     {
         visitor.visit(*this,indentation);
     };
-    std::vector<std::shared_ptr<Declaration>> getDeclarations(){return declarations;}
+    std::vector<std::unique_ptr<Declaration>> getDeclarations(){return std::move(declarations);}
 };
 
 class PrintVisitor : public Visitor{
@@ -153,7 +153,7 @@ public:
     };
     void visit(Program &element,int indentation) override
     {
-        for(auto declaration : element.declarations)
+        for(auto &declaration : element.declarations)
             visit(declaration.operator*(),indentation);
     };
 
