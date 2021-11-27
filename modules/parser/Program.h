@@ -15,7 +15,10 @@ class Expression;
 class IExpression;
 class AdvExpression;
 class BasicExpression;
+class Variable;
+class VariableAccess;
 class Program;
+class FunCall;
 enum class TypeOfData
 {
     Integer,
@@ -36,6 +39,9 @@ class Visitor
 {
 public:
     virtual void visit(Declaration &element,int indentation) = 0;
+    virtual void visit(FunCall &element,int indentation) = 0;
+    virtual void visit(VariableAccess &element,int indentation) = 0;
+    virtual void visit(Variable &element,int indentation) = 0;
     virtual void visit(VariableDeclr &element,int indentation) = 0;
     virtual void visit(Expression &element,int indentation) = 0;
     virtual void visit(AdvExpression &element,int indentation) = 0;
@@ -48,7 +54,7 @@ class INode
 public:
     virtual void accept(Visitor &v,int indentation) = 0;
 };
-class IExpression
+class IExpression : public INode
 {
 public:
     virtual void accept(Visitor &v,int indentation){};
@@ -104,19 +110,55 @@ public:
 
 };
 
+class VariableAccess : public INode
+{
+public:
+    std::string id;
+    VariableAccess(std::string _id) : id(_id){};
+void accept(Visitor &visitor,int indentation) override{
+    visitor.visit(*this,indentation);
+};
+};
+class Variable : public INode
+{
+public:
+    std::string id;
+    TypeOfData typeOfData;
+    std::variant<int,double,std::string,Date,TimeDiff> value;
+    Variable(){};
+    Variable(std::string _id, TypeOfData _typeOfData) : id(_id), typeOfData(_typeOfData){};
+    void accept(Visitor &visitor,int indentation) override{
+        visitor.visit(*this,indentation);
+    };
+};
+class FunCall : public INode
+{
+public:
+    std::string id;
+    std::vector<IExpression> arguments;
+    FunCall(std::string _id, std::vector<IExpression> _arguments) : id(_id), arguments(std::move(_arguments)){
+    };
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
 struct BasicGet {
     std::string operator()(int value) { return std::to_string(value); }
     std::string operator()(double value) { return std::to_string(value); }
-    std::string operator()(std::string value) { return value;}
+    std::string operator()(std::string value) { return "\""+value+"\"";}
+    std::string operator()(Date value) { return value.toString();}
+    std::string operator()(TimeDiff value) { return value.toString();}
+    std::string operator()(VariableAccess value) { return value.id;}
+    std::string operator()(FunCall value) { return "FunCall";}
 
 };
 class BasicExpression :public IExpression
 {
 public:
-    std::variant<int,double,std::string> basic;
+    std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> basic;
     bool wasMinus;
     BasicExpression(){};
-    BasicExpression(std::variant<int,double,std::string> _basic, bool _wasMinus) : basic(_basic), wasMinus(_wasMinus){};
+    BasicExpression(std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> _basic, bool _wasMinus) : basic(_basic), wasMinus(_wasMinus){};
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
@@ -186,6 +228,8 @@ public:
         else
             debug +="Is Minus = false";
         debug += ",Value:"+ element.ValueToString()+"]\n";
+        if(element.basic.index()==6)
+            std::get<FunCall>(element.basic).accept(*this,indentation+2);
     };
     void visit(Declaration &element,int indentation) override{
         debug += "entered Declaration\n";
@@ -193,6 +237,22 @@ public:
         element.assignable.operator*().accept(*this,indentation+2);
         debug += "exited Declaration\n";
 
+    };
+    void visit(Variable &element,int indentation) override{
+
+    };
+    void visit(VariableAccess &element,int indentation) override{
+
+    };
+    void visit(FunCall &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"entered FunCall [";
+        debug +="name = "+element.id;
+        //for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++)
+            //element.arguments[i]->accept(*this,indentation+2);
+        debug +="]\n";
     };
 
 

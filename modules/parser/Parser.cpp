@@ -36,7 +36,8 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
     return std::make_unique<Program>(Program(std::move(variable_declarations)));
 }
 std::unique_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
-    if (currentToken.type != TokenType::Int)
+    if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float
+    && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff)
         return nullptr;
 
     VariableDeclr var;
@@ -97,17 +98,14 @@ std::unique_ptr<IExpression> Parser::TryToParseAdvancedExpression()
 std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
 {
 
-    std::variant<int,double,std::string> basic;
+    std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> basic;
     bool wasMinus = false;
     if (currentToken.type == TokenType::Minus)
     {
         wasMinus = true;
         getNextToken();
     }
-    if (currentToken.type != TokenType::Number && currentToken.type != TokenType::StringValue){
-        return nullptr;
-    }
-    else if (currentToken.type == TokenType::Number)
+    if(currentToken.type == TokenType::Number)
     {
         if(currentToken.value.index()==0)
             basic = std::get<int>(currentToken.value);
@@ -121,8 +119,61 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         getNextToken();
         return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
     }
+    else if (currentToken.type == TokenType::DateValue){
+        basic = std::get<Date>(currentToken.value);
+        getNextToken();
+        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+    }
+    else if (currentToken.type == TokenType::TimeDiffValue){
+        basic = std::get<TimeDiff>(currentToken.value);
+        getNextToken();
+        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+    }
+    else if(currentToken.type == TokenType::Id){
+        std::string id = std::get<std::string>(currentToken.value);
+        basic = VariableAccess(id);
+        getNextToken();
+        auto function = TryToParseFunctionCall(id);
+        if(function)
+            basic = *function.get();
+        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+    }
     return nullptr;
 
+}
+std::unique_ptr<FunCall> Parser::TryToParseFunctionCall(std::string id){
+    if(currentToken.type != TokenType::Left_parentheses)
+        return nullptr;
+    getNextToken();
+    //std::vector<std::unique_ptr<IExpression>> b;
+    std::vector<IExpression> arguments = TryToParseArguments();
+    return std::make_unique<FunCall>(FunCall(id,std::move(arguments)));
+}
+std::vector<IExpression> Parser::TryToParseArguments(){
+    std::vector<IExpression> arguments;
+    if (currentToken.type == TokenType::Right_parentheses)
+    {
+        getNextToken();
+        return arguments;
+    }
+    bool x;
+    do
+    {
+        auto s = TryToParseExpression();
+        if(s == nullptr)
+            ErrorHandler::printParserError(currentToken,"Failed to parse arguments");
+        arguments.push_back(*s);
+        if (currentToken.type == TokenType::Colon){
+            getNextToken();
+            x = true;
+        }
+        else{
+            x = false;
+        }
+
+    } while (x);
+    expect_and_accept(TokenType::Right_parentheses,"No ) after arguments");
+    return arguments;
 }
 std::unique_ptr<Expression> Parser::CreateExpression(std::string my_operator, std::unique_ptr<IExpression> left, std::unique_ptr<IExpression> right) {
 
@@ -133,7 +184,16 @@ std::unique_ptr<AdvExpression> Parser::CreateAdvExpression(std::string my_operat
     return std::make_unique<AdvExpression>(AdvExpression(my_operator, std::move(left),std::move(right)));
 }
 TypeOfData Parser::getTypeOfData(TokenType type){
-    return TypeOfData::Integer;
+    if (type == TokenType::Int)
+        return TypeOfData::Integer;
+    if (type == TokenType::Float)
+        return TypeOfData::Double;
+    if (type == TokenType::String)
+        return TypeOfData::Message;
+    if (type == TokenType::Date)
+        return TypeOfData::Date;
+    else
+        return TypeOfData::TimeDiff;
 }
 std::string Parser::getOperatorType(){
     if(currentToken.type == TokenType::Plus)
