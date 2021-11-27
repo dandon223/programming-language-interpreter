@@ -135,20 +135,20 @@ class FunCall : public INode
 {
 public:
     std::string id;
-    std::vector<IExpression> arguments;
-    FunCall(std::string _id, std::vector<IExpression> _arguments) : id(_id), arguments(std::move(_arguments)){
+    std::vector<std::shared_ptr<IExpression>> arguments;
+    FunCall(std::string _id, std::vector<std::shared_ptr<IExpression>> _arguments) : id(_id), arguments(std::move(_arguments)){
     };
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
 };
 struct BasicGet {
-    std::string operator()(int value) { return std::to_string(value); }
-    std::string operator()(double value) { return std::to_string(value); }
-    std::string operator()(std::string value) { return "\""+value+"\"";}
-    std::string operator()(Date value) { return value.toString();}
-    std::string operator()(TimeDiff value) { return value.toString();}
-    std::string operator()(VariableAccess value) { return value.id;}
+    std::string operator()(int value) { return "Int "+std::to_string(value); }
+    std::string operator()(double value) { return "Double "+std::to_string(value); }
+    std::string operator()(std::string value) { return "String \""+value+"\"";}
+    std::string operator()(Date value) { return "Date "+value.toString();}
+    std::string operator()(TimeDiff value) { return "TimeDiff "+value.toString();}
+    std::string operator()(VariableAccess value) { return "VariableId " +value.id;}
     std::string operator()(FunCall value) { return "FunCall";}
 
 };
@@ -248,11 +248,10 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered FunCall [";
-        debug +="name = "+element.id;
-        //for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++)
-            //element.arguments[i]->accept(*this,indentation+2);
-        debug +="]\n";
+        debug += spaces+"entered FunCall ["+="name = "+element.id+",args:\n";
+        for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++)
+            element.arguments[i]->accept(*this,indentation+2);
+        debug +=spaces + "]\n";
     };
 
 

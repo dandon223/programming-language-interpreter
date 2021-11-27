@@ -24,7 +24,7 @@ private:
     std::unique_ptr<IExpression> TryToParseAdvancedExpression();
     std::unique_ptr<IExpression> TryToParseBasicExpression();
     std::unique_ptr<FunCall> TryToParseFunctionCall(std::string id);
-    std::vector<IExpression> TryToParseArguments();
+    std::vector<std::shared_ptr<IExpression>> TryToParseArguments();
     TypeOfData getTypeOfData(TokenType type);
     std::string getOperatorType();
     std::unique_ptr<Expression>CreateExpression(std::string basicString, std::unique_ptr<IExpression> expression, std::unique_ptr<IExpression> expression1);

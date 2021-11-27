@@ -145,12 +145,11 @@ std::unique_ptr<FunCall> Parser::TryToParseFunctionCall(std::string id){
     if(currentToken.type != TokenType::Left_parentheses)
         return nullptr;
     getNextToken();
-    //std::vector<std::unique_ptr<IExpression>> b;
-    std::vector<IExpression> arguments = TryToParseArguments();
+    std::vector<std::shared_ptr<IExpression>> arguments = TryToParseArguments();
     return std::make_unique<FunCall>(FunCall(id,std::move(arguments)));
 }
-std::vector<IExpression> Parser::TryToParseArguments(){
-    std::vector<IExpression> arguments;
+std::vector<std::shared_ptr<IExpression>> Parser::TryToParseArguments(){
+    std::vector<std::shared_ptr<IExpression>> arguments;
     if (currentToken.type == TokenType::Right_parentheses)
     {
         getNextToken();
@@ -162,8 +161,9 @@ std::vector<IExpression> Parser::TryToParseArguments(){
         auto s = TryToParseExpression();
         if(s == nullptr)
             ErrorHandler::printParserError(currentToken,"Failed to parse arguments");
-        arguments.push_back(*s);
-        if (currentToken.type == TokenType::Colon){
+        if(s!= nullptr)
+            arguments.push_back(std::move(s));
+        if (currentToken.type == TokenType::Comma){
             getNextToken();
             x = true;
         }
