@@ -57,6 +57,7 @@ public:
 class IExpression : public INode
 {
 public:
+    bool wasMinus;
     virtual void accept(Visitor &v,int indentation){};
 };
 
@@ -156,9 +157,8 @@ class BasicExpression :public IExpression
 {
 public:
     std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> basic;
-    bool wasMinus;
     BasicExpression(){};
-    BasicExpression(std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> _basic, bool _wasMinus) : basic(_basic), wasMinus(_wasMinus){};
+    BasicExpression(std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> _basic, bool _wasMinus) : basic(_basic){wasMinus = _wasMinus;};
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
@@ -212,7 +212,11 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered Expression\n";
+        debug += spaces+"entered Expression[";
+        if(element.wasMinus)
+            debug += " Is Minus = true]\n";
+        else
+            debug += "]\n";
         element.left.operator*().accept(*this,indentation+2);
         debug += spaces+"Operator: " +element.operationType+"\n";
         element.right.operator*().accept(*this,indentation+2);

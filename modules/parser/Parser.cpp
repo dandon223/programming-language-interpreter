@@ -138,8 +138,18 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
             basic = *function.get();
         return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
     }
+    else if(currentToken.type == TokenType::Left_parentheses){
+        auto expr = TryToParseParenthesisExpresion();
+        return expr;
+    }
     return nullptr;
 
+}
+std::unique_ptr<IExpression> Parser::TryToParseParenthesisExpresion(){
+    expect_and_accept(TokenType::Left_parentheses, "no left parenthesis");
+    auto expr = TryToParseExpression();
+    expect_and_accept(TokenType::Right_parentheses, "no right parenthesis");
+    return expr;
 }
 std::unique_ptr<FunCall> Parser::TryToParseFunctionCall(std::string id){
     if(currentToken.type != TokenType::Left_parentheses)

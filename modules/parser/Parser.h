@@ -21,6 +21,7 @@ private:
     void expect_and_accept(TokenType ttype, std::string message);
     std::unique_ptr<Declaration>TryToParseVariableDeclaration();
     std::unique_ptr<IExpression>TryToParseExpression();
+    std::unique_ptr<IExpression> TryToParseParenthesisExpresion();
     std::unique_ptr<IExpression> TryToParseAdvancedExpression();
     std::unique_ptr<IExpression> TryToParseBasicExpression();
     std::unique_ptr<FunCall> TryToParseFunctionCall(std::string id);
