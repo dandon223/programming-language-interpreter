@@ -19,6 +19,8 @@ class Variable;
 class VariableAccess;
 class Program;
 class FunCall;
+class Function;
+class Body;
 enum class TypeOfData
 {
     Integer,
@@ -47,6 +49,8 @@ public:
     virtual void visit(AdvExpression &element,int indentation) = 0;
     virtual void visit(BasicExpression &element, int indentation) = 0;
     virtual void visit(Program &element,int indentation) = 0;
+    virtual void visit(Function &element,int indentation) = 0;
+    virtual void visit(Body &element,int indentation) = 0;
 };
 
 class INode
@@ -166,7 +170,34 @@ public:
         return std::visit(BasicGet{}, basic);
     }
 };
+class Body : INode
+{
+public:
+    std::vector<std::variant< Declaration, FunCall>> statements;
 
+    Body(std::vector<std::variant< Declaration, FunCall>>_statements) : statements(_statements){};
+    Body(){};
+
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
+class Function: public INode
+{
+public:
+    explicit Function(std::string name, TypeOfData dataType,
+                      std::vector<std::unique_ptr<VariableDeclr>> parameters, Body block) : _name(name),
+                                                                            _dataType(dataType), _parameters(parameters), _block(block){};
+    Function(){};
+    std::string _name;
+    TypeOfData _dataType;
+    std::vector<std::unique_ptr<VariableDeclr>> _parameters;
+    Body _block;
+    void accept(Visitor &visitor,int indentation) override
+    {
+        visitor.visit(*this,indentation);
+    };
+};
 class Program : public INode
 {
 public:
@@ -256,6 +287,9 @@ public:
         for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++)
             element.arguments[i]->accept(*this,indentation+2);
         debug +=spaces + "]\n";
+    };
+    void visit(Function &element,int indentation) override{
+
     };
 
 

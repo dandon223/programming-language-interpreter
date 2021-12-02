@@ -14,6 +14,7 @@ void Parser::getNextToken()
 std::unique_ptr<Program> Parser::TryToParseProgram()
 {
     std::vector<std::unique_ptr<Declaration>> variable_declarations;
+    std::vector<std::unique_ptr<Function>> functionsVector;
     std::cout << "Beginning Parsing\n";
     expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
     while (auto s = TryToParseVariableDeclaration())
