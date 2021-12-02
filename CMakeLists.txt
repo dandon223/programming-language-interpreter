@@ -8,7 +8,6 @@ include_directories(
         ${CMAKE_HOME_DIRECTORY}/modules/lexer
         ${CMAKE_HOME_DIRECTORY}/modules/parser
         ${CMAKE_HOME_DIRECTORY}/modules/token
-        ${CMAKE_HOME_DIRECTORY}/modules/structures
 )
 
 add_executable(tkom_21z_daniel ${TARGET_SRC} )

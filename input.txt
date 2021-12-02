@@ -1,4 +1,1 @@
-fun int a():
-		return 10
-fun float b():
-	return 1.1
+int a = 1 * 1+1

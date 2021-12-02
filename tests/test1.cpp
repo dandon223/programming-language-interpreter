@@ -7,8 +7,6 @@
 #include "../modules/lexer/Lexer.cpp"
 #include "../modules/token/Token.h"
 #include "../modules/token/Token.cpp"
-#include "../modules/structures/Date.h"
-#include "../modules/structures/Date.cpp"
 #include "../modules/errorHandler/ErrorHandler.h"
 #include "../modules/errorHandler/ErrorHandler.cpp"
 

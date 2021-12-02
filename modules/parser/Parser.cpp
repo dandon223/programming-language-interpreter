@@ -14,7 +14,7 @@ void Parser::getNextToken()
 std::unique_ptr<Program> Parser::TryToParseProgram()
 {
     std::vector<std::unique_ptr<Declaration>> variable_declarations;
-    std::vector<std::unique_ptr<Function>> functionsVector;
+    //std::vector<std::unique_ptr<Function>> functionsVector;
     std::cout << "Beginning Parsing\n";
     expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
     while (auto s = TryToParseVariableDeclaration())
@@ -99,7 +99,7 @@ std::unique_ptr<IExpression> Parser::TryToParseAdvancedExpression()
 std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
 {
 
-    std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> basic;
+    std::unique_ptr<INode> basic;
     bool wasMinus = false;
     if (currentToken.type == TokenType::Minus)
     {
@@ -109,35 +109,35 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
     if(currentToken.type == TokenType::Number)
     {
         if(currentToken.value.index()==0)
-            basic = std::get<int>(currentToken.value);
+            basic = std::make_unique<Int>(std::get<int>(currentToken.value));//std::get<int>(currentToken.value);
         else
-            basic = std::get<double>(currentToken.value);
+            basic = std::make_unique<Double>(std::get<double>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
     }
     else if (currentToken.type == TokenType::StringValue){
-        basic = std::get<std::string>(currentToken.value);
+        basic = std::make_unique<String>(std::get<std::string>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
     }
     else if (currentToken.type == TokenType::DateValue){
-        basic = std::get<Date>(currentToken.value);
+        basic = std::make_unique<Date>(std::get<Date>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
     }
     else if (currentToken.type == TokenType::TimeDiffValue){
-        basic = std::get<TimeDiff>(currentToken.value);
+        basic =std::make_unique<TimeDiff>(std::get<TimeDiff>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
     }
     else if(currentToken.type == TokenType::Id){
         std::string id = std::get<std::string>(currentToken.value);
-        basic = VariableAccess(id);
+        basic = std::make_unique<VariableAccess>(VariableAccess(id));
         getNextToken();
         auto function = TryToParseFunctionCall(id);
         if(function)
-            basic = *function.get();
-        return std::make_unique<BasicExpression>(BasicExpression(basic, wasMinus));
+            basic = std::move(function);
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
     }
     else if(currentToken.type == TokenType::Left_parentheses){
         auto expr = TryToParseParenthesisExpresion();

@@ -1,7 +1,7 @@
 
 #include <cmath>
 #include "Lexer.h"
-#include "../structures/Date.h"
+#include "../parser/Program.h"
 #include "../errorHandler/ErrorHandler.h"
 Lexer::Lexer(std::istream &my_handle) : handle(my_handle){
     active_token.start_pos = handle.tellg();

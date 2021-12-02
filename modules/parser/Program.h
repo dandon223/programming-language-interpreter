@@ -19,8 +19,13 @@ class Variable;
 class VariableAccess;
 class Program;
 class FunCall;
-class Function;
-class Body;
+//class Function;
+//class Body;
+class Int;
+class Double;
+class String;
+class Date;
+class TimeDiff;
 enum class TypeOfData
 {
     Integer,
@@ -49,20 +54,101 @@ public:
     virtual void visit(AdvExpression &element,int indentation) = 0;
     virtual void visit(BasicExpression &element, int indentation) = 0;
     virtual void visit(Program &element,int indentation) = 0;
-    virtual void visit(Function &element,int indentation) = 0;
-    virtual void visit(Body &element,int indentation) = 0;
+    //virtual void visit(Function &element,int indentation) = 0;
+    //virtual void visit(Body &element,int indentation) = 0;
+    virtual void visit(Int &element,int indentation) = 0;
+    virtual void visit(Double &element,int indentation) = 0;
+    virtual void visit(String &element,int indentation) = 0;
+    virtual void visit(Date &element,int indentation) = 0;
+    virtual void visit(TimeDiff &element,int indentation) = 0;
 };
 
 class INode
 {
 public:
-    virtual void accept(Visitor &v,int indentation) = 0;
+    virtual void accept(Visitor &v,int indentation){};
 };
 class IExpression : public INode
 {
 public:
     bool wasMinus;
     virtual void accept(Visitor &v,int indentation){};
+};
+class Int : public INode
+{
+public:
+    int value;
+    Int(int i):value(i){};
+    void accept(Visitor &visitor,int indentation) override
+    {
+        visitor.visit(*this,indentation);
+    };
+};
+class Double : public INode
+{
+public:
+    double value;
+    Double(double i):value(i){};
+    void accept(Visitor &visitor,int indentation) override
+    {
+        visitor.visit(*this,indentation);
+    };
+};
+class String : public INode
+{
+public:
+    std::string value;
+    String(std::string i):value(i){};
+    void accept(Visitor &visitor,int indentation) override
+    {
+        visitor.visit(*this,indentation);
+    };
+};
+class Date : public INode{
+private:
+    int year = 1970;
+    int month = 1;
+    int day = 1;
+public:
+    Date(int y, int m, int d) :year(y),month(m),day(d){}
+    std::string toString() {
+        std::string year_date = std::to_string(year);
+        std::string month_date = std::to_string(month);
+        std::string day_date = std::to_string(day);
+        if(year <10)
+            year_date = "000" +year_date;
+        else if(year <100)
+            year_date = "00" +year_date;
+        else if(year <1000)
+            year_date = "0" +year_date;
+
+        if(month < 10)
+            month_date = "0" + month_date;
+
+        if(day <10)
+            day_date = "0" + day_date;
+        return year_date+":"+month_date+":"+day_date;
+    }
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+
+};
+class TimeDiff : public INode{
+private:
+    int year=0;
+    int month=0;
+    int day =0;
+public:
+    TimeDiff(int y, int m, int d) :year(y),month(m),day(d){}
+
+    std::string toString() {
+        return std::to_string(year)+"y"+std::to_string(month)+"m"+std::to_string(day)+"d";
+    }
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+
 };
 
 class VariableDeclr : public INode
@@ -160,44 +246,41 @@ struct BasicGet {
 class BasicExpression :public IExpression
 {
 public:
-    std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> basic;
+    std::unique_ptr<INode> basic;
     BasicExpression(){};
-    BasicExpression(std::variant<int,double,std::string,Date,TimeDiff,VariableAccess,FunCall> _basic, bool _wasMinus) : basic(_basic){wasMinus = _wasMinus;};
-    void accept(Visitor &v,int indentation) override {
-        v.visit(*this,indentation);
-    }
-    std::string ValueToString(){
-        return std::visit(BasicGet{}, basic);
-    }
-};
-class Body : INode
-{
-public:
-    std::vector<std::variant< Declaration, FunCall>> statements;
-
-    Body(std::vector<std::variant< Declaration, FunCall>>_statements) : statements(_statements){};
-    Body(){};
-
+    BasicExpression(std::unique_ptr<INode> _basic, bool _wasMinus) : basic(std::move(_basic)){wasMinus = _wasMinus;};
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
 };
-class Function: public INode
-{
-public:
-    explicit Function(std::string name, TypeOfData dataType,
-                      std::vector<std::unique_ptr<VariableDeclr>> parameters, Body block) : _name(name),
-                                                                            _dataType(dataType), _parameters(parameters), _block(block){};
-    Function(){};
-    std::string _name;
-    TypeOfData _dataType;
-    std::vector<std::unique_ptr<VariableDeclr>> _parameters;
-    Body _block;
-    void accept(Visitor &visitor,int indentation) override
-    {
-        visitor.visit(*this,indentation);
-    };
-};
+//class Body : INode
+//{
+//public:
+//    std::vector<std::variant< Declaration, FunCall>> statements;
+//
+//    Body(std::vector<std::variant< Declaration, FunCall>>_statements) : statements(_statements){};
+//    Body(){};
+//
+//    void accept(Visitor &v,int indentation) override {
+//        v.visit(*this,indentation);
+//    }
+//};
+//class Function: public INode
+//{
+//public:
+//    explicit Function(std::string name, TypeOfData dataType,
+//                      std::vector<VariableDeclr> parameters, Body block) : _name(name),
+//                                                                            _dataType(dataType), _parameters(parameters), _block(block){};
+//    Function(){};
+//    std::string _name;
+//    TypeOfData _dataType;
+//    std::vector<VariableDeclr> _parameters;
+//    Body _block;
+//    void accept(Visitor &visitor,int indentation) override
+//    {
+//        visitor.visit(*this,indentation);
+//    };
+//};
 class Program : public INode
 {
 public:
@@ -259,12 +342,10 @@ public:
             spaces += " ";
         debug += spaces+"entered BasicExpression [";
         if(element.wasMinus)
-            debug +="Is Minus = true";
+            debug +="Is Minus = true, ";
         else
-            debug +="Is Minus = false";
-        debug += ",Value:"+ element.ValueToString()+"]\n";
-        if(element.basic.index()==6)
-            std::get<FunCall>(element.basic).accept(*this,indentation+2);
+            debug +="Is Minus = false, ";
+        element.basic->accept(*this,indentation+2);
     };
     void visit(Declaration &element,int indentation) override{
         debug += "entered Declaration\n";
@@ -277,19 +358,40 @@ public:
 
     };
     void visit(VariableAccess &element,int indentation) override{
-
+        debug+="Type = VariableAccess, Value = " + element.id +"]\n";
     };
     void visit(FunCall &element,int indentation) override{
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered FunCall ["+="name = "+element.id+",args:\n";
-        for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++)
+        debug += "entered FunCall [ name = "+element.id+",args:\n";
+        for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++){
+            debug += spaces;
             element.arguments[i]->accept(*this,indentation+2);
-        debug +=spaces + "]\n";
-    };
-    void visit(Function &element,int indentation) override{
+        }
 
+        debug += spaces+"]\n";
+    };
+//    void visit(Function &element,int indentation) override{
+//
+//    };
+//    void visit(Body &element,int indentation) override{
+//
+//    };
+    void visit(Int &element,int indentation) override{
+        debug+="Type = Int, Value = " + std::to_string(element.value) +"]\n";
+    };
+    void visit(Double &element,int indentation) override{
+        debug+="Type = Double, Value = " + std::to_string(element.value) +"]\n";
+    };
+    void visit(String &element,int indentation) override{
+        debug+="Type = String, Value = " + element.value +"]\n";
+    };
+    void visit(Date &element,int indentation) override{
+        debug+="Type = Date, Value = " + element.toString() +"]\n";
+    };
+    void visit(TimeDiff &element,int indentation) override{
+        debug+="Type = TimeDiff, Value = " + element.toString() +"]\n";
     };
 
 
