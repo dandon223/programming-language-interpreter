@@ -1,1 +1,1 @@
-int a = 1 * 1+1
+fun int a(int a, date b)

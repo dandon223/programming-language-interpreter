@@ -19,8 +19,8 @@ class Variable;
 class VariableAccess;
 class Program;
 class FunCall;
-//class Function;
-//class Body;
+class Function;
+class Body;
 class Int;
 class Double;
 class String;
@@ -54,8 +54,8 @@ public:
     virtual void visit(AdvExpression &element,int indentation) = 0;
     virtual void visit(BasicExpression &element, int indentation) = 0;
     virtual void visit(Program &element,int indentation) = 0;
-    //virtual void visit(Function &element,int indentation) = 0;
-    //virtual void visit(Body &element,int indentation) = 0;
+    virtual void visit(Function &element,int indentation) = 0;
+    virtual void visit(Body &element,int indentation) = 0;
     virtual void visit(Int &element,int indentation) = 0;
     virtual void visit(Double &element,int indentation) = 0;
     virtual void visit(String &element,int indentation) = 0;
@@ -233,16 +233,7 @@ public:
         v.visit(*this,indentation);
     }
 };
-struct BasicGet {
-    std::string operator()(int value) { return "Int "+std::to_string(value); }
-    std::string operator()(double value) { return "Double "+std::to_string(value); }
-    std::string operator()(std::string value) { return "String \""+value+"\"";}
-    std::string operator()(Date value) { return "Date "+value.toString();}
-    std::string operator()(TimeDiff value) { return "TimeDiff "+value.toString();}
-    std::string operator()(VariableAccess value) { return "VariableId " +value.id;}
-    std::string operator()(FunCall value) { return "FunCall";}
 
-};
 class BasicExpression :public IExpression
 {
 public:
@@ -253,40 +244,44 @@ public:
         v.visit(*this,indentation);
     }
 };
-//class Body : INode
-//{
-//public:
-//    std::vector<std::variant< Declaration, FunCall>> statements;
-//
-//    Body(std::vector<std::variant< Declaration, FunCall>>_statements) : statements(_statements){};
-//    Body(){};
-//
-//    void accept(Visitor &v,int indentation) override {
-//        v.visit(*this,indentation);
-//    }
-//};
-//class Function: public INode
-//{
-//public:
-//    explicit Function(std::string name, TypeOfData dataType,
-//                      std::vector<VariableDeclr> parameters, Body block) : _name(name),
-//                                                                            _dataType(dataType), _parameters(parameters), _block(block){};
-//    Function(){};
-//    std::string _name;
-//    TypeOfData _dataType;
-//    std::vector<VariableDeclr> _parameters;
-//    Body _block;
-//    void accept(Visitor &visitor,int indentation) override
-//    {
-//        visitor.visit(*this,indentation);
-//    };
-//};
+class Body : public INode
+{
+public:
+    std::vector<std::shared_ptr<INode>> statements; // declaration, funCall
+
+    Body(std::vector<std::shared_ptr<INode>>_statements) : statements(std::move(_statements)){};
+    Body(){};
+
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
+class Function: public INode
+{
+public:
+    explicit Function(std::string _name, TypeOfData _dataType,
+                      std::vector<VariableDeclr> _parameters, Body _body) : name(_name),
+                                                                            dataType(_dataType), parameters(std::move(_parameters)), body(_body){};
+    explicit Function(std::string _name, TypeOfData _dataType,
+                      std::vector<VariableDeclr> _parameters) : name(_name),
+                                                                          dataType(_dataType), parameters(std::move(_parameters)){};
+    Function(){};
+    std::string name;
+    TypeOfData dataType;
+    std::vector<VariableDeclr> parameters;
+    Body body;
+    void accept(Visitor &visitor,int indentation) override
+    {
+        visitor.visit(*this,indentation);
+    };
+};
 class Program : public INode
 {
 public:
     std::vector<std::unique_ptr<Declaration>> declarations;
+    std::vector<std::unique_ptr<Function>> functions;
     Program(){};
-    Program(std::vector<std::unique_ptr<Declaration>> _declarations) : declarations(std::move(_declarations)){};
+    Program(std::vector<std::unique_ptr<Declaration>> _declarations,std::vector<std::unique_ptr<Function>> _functions) : declarations(std::move(_declarations)),functions(std::move(_functions)){};
     void accept(Visitor &visitor,int indentation) override
     {
         visitor.visit(*this,indentation);
@@ -311,6 +306,9 @@ public:
     {
         for(auto &declaration : element.declarations)
             visit(declaration.operator*(),indentation);
+        debug += "----------------------------------------\n";
+        for(auto &function : element.functions)
+            visit(function.operator*(),indentation);
     };
 
     void visit(AdvExpression &element,int indentation) override{
@@ -372,12 +370,17 @@ public:
 
         debug += spaces+"]\n";
     };
-//    void visit(Function &element,int indentation) override{
-//
-//    };
-//    void visit(Body &element,int indentation) override{
-//
-//    };
+    void visit(Function &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug+=spaces + "Function [ name = "+element.name+", returnType = "+TypeOfDataToString.at(static_cast<const int>(element.dataType))+", parameters:\n";
+        for(auto a : element.parameters)
+            a.accept(*this,indentation+2);
+    };
+    void visit(Body &element,int indentation) override{
+        debug+="Body\n";
+    };
     void visit(Int &element,int indentation) override{
         debug+="Type = Int, Value = " + std::to_string(element.value) +"]\n";
     };

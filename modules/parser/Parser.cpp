@@ -14,13 +14,14 @@ void Parser::getNextToken()
 std::unique_ptr<Program> Parser::TryToParseProgram()
 {
     std::vector<std::unique_ptr<Declaration>> variable_declarations;
-    //std::vector<std::unique_ptr<Function>> functionsVector;
+    std::vector<std::unique_ptr<Function>> functions;
     std::cout << "Beginning Parsing\n";
     expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
-    while (auto s = TryToParseVariableDeclaration())
+    while (auto s = TryToParseFunction())
     {
         if (s){
-            variable_declarations.push_back(std::move(s));
+            //variable_declarations.push_back(std::move(s));
+            functions.push_back(std::move(s));
         }
         else{
             expect(TokenType::End_of_text, "no end of text in TryToParseProgram");
@@ -34,7 +35,55 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
     else{
         std::cout << "Parsing Unsuccessful\n";
     }
-    return std::make_unique<Program>(Program(std::move(variable_declarations)));
+    return std::make_unique<Program>(Program(std::move(variable_declarations),std::move(functions)));
+}
+std::unique_ptr<Function> Parser::TryToParseFunction(){
+    if(currentToken.type != TokenType::Function) // 'fun'
+        return nullptr;
+    getNextToken();
+
+    if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float  // typ
+        && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff){
+        ErrorHandler::printParserError(currentToken,"no proper Type after 'fun'");
+        return nullptr;
+    }
+    TypeOfData typeOfData = getTypeOfData(currentToken.type);
+    getNextToken();
+
+    expect(TokenType::Id, "no id in declare statement");
+    std::string id = std::get<std::string>(currentToken.value);
+    getNextToken();
+    std::vector<VariableDeclr> params = TryToParseParameters();
+    expect_and_accept(TokenType::Right_parentheses,"no ) after parameters");
+    return std::make_unique<Function>(Function(id,typeOfData,params));
+}
+std::vector<VariableDeclr> Parser::TryToParseParameters(){
+    std::vector<VariableDeclr> parameters;
+
+    expect(TokenType::Left_parentheses, "No left parentheses in function declaration\n");
+    if (currentToken.type == TokenType::Right_parentheses)
+    {
+        return parameters;
+    }
+    do
+    {
+        getNextToken();
+        if (currentToken.type == TokenType::Right_parentheses)
+        {
+            return parameters;
+        }
+        if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float  // typ
+            && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff)
+            ErrorHandler::printParserError(currentToken,"No valid type or no type");
+        TypeOfData tod = getTypeOfData(currentToken.type);
+        getNextToken();
+        expect(TokenType::Id, "no id after type\n");
+        std::string paramid = std::get<std::string>(currentToken.value);
+        parameters.push_back(VariableDeclr(paramid, tod));
+        getNextToken();
+    } while (currentToken.type == TokenType::Comma);
+
+    return parameters;
 }
 std::unique_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
     if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float
