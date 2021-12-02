@@ -1,1 +1,4 @@
+fun int a(int c, date d)
+int a = 10
+
 fun int a(int a, date b)

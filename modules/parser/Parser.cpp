@@ -17,27 +17,39 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
     std::vector<std::unique_ptr<Function>> functions;
     std::cout << "Beginning Parsing\n";
     expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
-    while (auto s = TryToParseFunction())
+    while (auto s = TryToParseFunctionOrVarDefinition())
     {
-        if (s){
-            //variable_declarations.push_back(std::move(s));
-            functions.push_back(std::move(s));
-        }
+        std::unique_ptr<Function> function(dynamic_cast<Function*>(s.get()));
+        std::unique_ptr<Declaration> declaration(dynamic_cast<Declaration*>(s.release()));
+
+        if(function)
+            functions.push_back(std::move(function));
+        else if(declaration)
+            variable_declarations.push_back(std::move(declaration));
         else{
             expect(TokenType::End_of_text, "no end of text in TryToParseProgram");
         }
         if(currentToken.type != TokenType::End_of_text)
             expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
     }
-    if (!variable_declarations.empty()){
+    if (!variable_declarations.empty() || !functions.empty()){
         std::cout << "Parsing Successfull\n";
     }
     else{
-        std::cout << "Parsing Unsuccessful\n";
+        std::cout << "Parsing Unsuccessful or empty file\n";
     }
     return std::make_unique<Program>(Program(std::move(variable_declarations),std::move(functions)));
 }
-std::unique_ptr<Function> Parser::TryToParseFunction(){
+std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(){
+    auto s = TryToParseFunction();
+    if(s)
+        return s;
+    s = TryToParseVariableDeclaration();
+    if(s)
+        return s;
+    return nullptr;
+}
+std::unique_ptr<INode> Parser::TryToParseFunction(){
     if(currentToken.type != TokenType::Function) // 'fun'
         return nullptr;
     getNextToken();
@@ -85,7 +97,7 @@ std::vector<VariableDeclr> Parser::TryToParseParameters(){
 
     return parameters;
 }
-std::unique_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
+std::unique_ptr<INode> Parser::TryToParseVariableDeclaration(){
     if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float
     && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff)
         return nullptr;
