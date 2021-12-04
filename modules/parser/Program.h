@@ -13,6 +13,7 @@ class Declaration;
 class VariableDeclr;
 class Expression;
 class IExpression;
+class AssignStatement;
 class AdvExpression;
 class BasicExpression;
 class Variable;
@@ -26,6 +27,7 @@ class Double;
 class String;
 class Date;
 class TimeDiff;
+class INode;
 enum class TypeOfData
 {
     Integer,
@@ -37,7 +39,7 @@ enum class TypeOfData
 const std::unordered_map<int, std::string> TypeOfDataToString = {
 
         {0, "Integer"},
-        {1, "Double"},
+        {1, "Float"},
         {2,"Message" },
         {3,"Date" },
         {4,"TimeDiff" }
@@ -46,6 +48,8 @@ class Visitor
 {
 public:
     virtual void visit(Declaration &element,int indentation) = 0;
+    //virtual void visit(INode &element,int indentation) = 0; AssignStatement
+    virtual void visit(AssignStatement &element,int indentation) = 0;
     virtual void visit(FunCall &element,int indentation) = 0;
     virtual void visit(VariableAccess &element,int indentation) = 0;
     virtual void visit(Variable &element,int indentation) = 0;
@@ -72,7 +76,6 @@ class IExpression : public INode
 {
 public:
     bool wasMinus;
-    virtual void accept(Visitor &v,int indentation){};
 };
 class Int : public INode
 {
@@ -150,7 +153,29 @@ public:
     }
 
 };
+class VariableAccess : public INode
+{
+public:
+    std::string id;
+    VariableAccess(std::string _id) : id(_id){};
+    void accept(Visitor &visitor,int indentation) override{
+        visitor.visit(*this,indentation);
+    };
+};
 
+
+class AssignStatement : public INode
+{
+public:
+    std::unique_ptr<VariableAccess> var;
+    std::unique_ptr<IExpression> assignable;
+    AssignStatement(){};
+    AssignStatement(std::unique_ptr<VariableAccess> _var, std::unique_ptr<IExpression> _assignable) : var(std::move(_var)), assignable(std::move(_assignable)){};
+    void accept(Visitor &visitor,int indentation) override
+    {
+        visitor.visit(*this,indentation);
+    };
+};
 class VariableDeclr : public INode
 {
 public:
@@ -197,19 +222,13 @@ public:
     std::unique_ptr<IExpression> assignable;
     Declaration(){};
     Declaration(VariableDeclr _var, std::unique_ptr<IExpression> _assignable) : var(_var), assignable(std::move(_assignable)) {}
-    void accept(Visitor &visitor,int indentation) override{};
+    void accept(Visitor &visitor,int indentation) override{
+        visitor.visit(*this,indentation);
+    };
 
 };
 
-class VariableAccess : public INode
-{
-public:
-    std::string id;
-    VariableAccess(std::string _id) : id(_id){};
-void accept(Visitor &visitor,int indentation) override{
-    visitor.visit(*this,indentation);
-};
-};
+
 class Variable : public INode
 {
 public:
@@ -247,7 +266,7 @@ public:
 class Body : public INode
 {
 public:
-    std::vector<std::shared_ptr<INode>> statements; // declaration, funCall
+    std::vector<std::shared_ptr<INode>> statements; // declaration, assignStatement, FunCall
 
     Body(std::vector<std::shared_ptr<INode>>_statements) : statements(std::move(_statements)){};
     Body(){};
@@ -260,8 +279,8 @@ class Function: public INode
 {
 public:
     explicit Function(std::string _name, TypeOfData _dataType,
-                      std::vector<VariableDeclr> _parameters, Body _body) : name(_name),
-                                                                            dataType(_dataType), parameters(std::move(_parameters)), body(_body){};
+                      std::vector<VariableDeclr> _parameters, std::unique_ptr<Body> _body) : name(_name),
+                                                                            dataType(_dataType), parameters(std::move(_parameters)), body(std::move(_body)){};
     explicit Function(std::string _name, TypeOfData _dataType,
                       std::vector<VariableDeclr> _parameters) : name(_name),
                                                                           dataType(_dataType), parameters(std::move(_parameters)){};
@@ -269,7 +288,7 @@ public:
     std::string name;
     TypeOfData dataType;
     std::vector<VariableDeclr> parameters;
-    Body body;
+    std::unique_ptr<Body> body;
     void accept(Visitor &visitor,int indentation) override
     {
         visitor.visit(*this,indentation);
@@ -346,14 +365,18 @@ public:
         element.basic->accept(*this,indentation+2);
     };
     void visit(Declaration &element,int indentation) override{
-        debug += "entered Declaration\n";
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"entered Declaration\n";
         visit(element.var,indentation+2);
-        element.assignable.operator*().accept(*this,indentation+2);
-        debug += "exited Declaration\n";
+        if(element.assignable != nullptr)
+            element.assignable.operator*().accept(*this,indentation+2);
+        debug += spaces+"exited Declaration\n";
 
     };
     void visit(Variable &element,int indentation) override{
-
+        debug += "entered Variable\n";
     };
     void visit(VariableAccess &element,int indentation) override{
         debug+="Type = VariableAccess, Value = " + element.id +"]\n";
@@ -362,7 +385,7 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += "entered FunCall [ name = "+element.id+",args:\n";
+        debug += spaces+"entered FunCall [ name = "+element.id+",args:\n";
         for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++){
             debug += spaces;
             element.arguments[i]->accept(*this,indentation+2);
@@ -377,15 +400,30 @@ public:
         debug+=spaces + "Function [ name = "+element.name+", returnType = "+TypeOfDataToString.at(static_cast<const int>(element.dataType))+", parameters:\n";
         for(auto a : element.parameters)
             a.accept(*this,indentation+2);
+        element.body->accept(*this,indentation+2);
     };
     void visit(Body &element,int indentation) override{
-        debug+="Body\n";
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug+=spaces+",Body [\n";
+        for(long long unsigned int i = 0 ; i < element.statements.size() ; i++){
+            element.statements[i]->accept(*this,indentation+2);
+        }
     };
+    void visit(AssignStatement &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug+= spaces+"entered AssignStatement [ ";
+        element.var->accept(*this,indentation+2);
+        element.assignable->accept(*this,indentation+2);
+    }
     void visit(Int &element,int indentation) override{
         debug+="Type = Int, Value = " + std::to_string(element.value) +"]\n";
     };
     void visit(Double &element,int indentation) override{
-        debug+="Type = Double, Value = " + std::to_string(element.value) +"]\n";
+        debug+="Type = Float, Value = " + std::to_string(element.value) +"]\n";
     };
     void visit(String &element,int indentation) override{
         debug+="Type = String, Value = " + element.value +"]\n";
@@ -396,6 +434,9 @@ public:
     void visit(TimeDiff &element,int indentation) override{
         debug+="Type = TimeDiff, Value = " + element.toString() +"]\n";
     };
+//    void visit(INode &element,int indentation) override{
+//        debug += "INODE\n";
+//    }
 
 
 };

@@ -1,4 +1,4 @@
-fun int a(int c, date d)
-int a = 10
-
-fun int a(int a, date b)
+fun int a(float c, date d):
+	int a
+	a = 10
+	c(1,2)

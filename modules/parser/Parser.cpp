@@ -16,8 +16,11 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
     std::vector<std::unique_ptr<Declaration>> variable_declarations;
     std::vector<std::unique_ptr<Function>> functions;
     std::cout << "Beginning Parsing\n";
+    int indentation = 0;
+    if(currentToken.type == TokenType::Indentation)
+        indentation = currentToken.length;
     expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
-    while (auto s = TryToParseFunctionOrVarDefinition())
+    while (auto s = TryToParseFunctionOrVarDefinition(indentation))
     {
         std::unique_ptr<Function> function(dynamic_cast<Function*>(s.get()));
         std::unique_ptr<Declaration> declaration(dynamic_cast<Declaration*>(s.release()));
@@ -29,8 +32,11 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
         else{
             expect(TokenType::End_of_text, "no end of text in TryToParseProgram");
         }
-        if(currentToken.type != TokenType::End_of_text)
+        if(currentToken.type != TokenType::End_of_text){
+            if(currentToken.type == TokenType::Indentation)
+                indentation = currentToken.length;
             expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
+        }
     }
     if (!variable_declarations.empty() || !functions.empty()){
         std::cout << "Parsing Successfull\n";
@@ -40,8 +46,8 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
     }
     return std::make_unique<Program>(Program(std::move(variable_declarations),std::move(functions)));
 }
-std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(){
-    auto s = TryToParseFunction();
+std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(int indentation){
+    auto s = TryToParseFunction(indentation);
     if(s)
         return s;
     s = TryToParseVariableDeclaration();
@@ -49,7 +55,7 @@ std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(){
         return s;
     return nullptr;
 }
-std::unique_ptr<INode> Parser::TryToParseFunction(){
+std::unique_ptr<INode> Parser::TryToParseFunction(int indentation){
     if(currentToken.type != TokenType::Function) // 'fun'
         return nullptr;
     getNextToken();
@@ -67,7 +73,49 @@ std::unique_ptr<INode> Parser::TryToParseFunction(){
     getNextToken();
     std::vector<VariableDeclr> params = TryToParseParameters();
     expect_and_accept(TokenType::Right_parentheses,"no ) after parameters");
-    return std::make_unique<Function>(Function(id,typeOfData,params));
+    expect_and_accept(TokenType::Colon,"no : after )");
+    auto body = TryToParseBody(indentation);
+    return std::make_unique<Function>(Function(id,typeOfData,params,std::move(body)));
+}
+std::unique_ptr<Body> Parser::TryToParseBody(int indentation) {
+    std::vector<std::shared_ptr<INode>> statements;
+    while(currentToken.type == TokenType::Indentation && currentToken.length == indentation+4){
+        getNextToken();
+        if(auto s = TryToParseVariableDeclaration()){
+            statements.push_back(std::move(s));
+        }else if(auto x = TryToParseAssignOrFunCall()){
+            statements.push_back(std::move(x));
+        }
+    }
+    return std::make_unique<Body>(Body(std::move(statements)));
+}
+std::unique_ptr<INode> Parser::TryToParseAssignOrFunCall(){
+    if (currentToken.type != TokenType::Id)
+        return nullptr;
+    std::string id = std::get<std::string>(currentToken.value);
+    getNextToken();
+    if (currentToken.type == TokenType::Left_parentheses)
+        return TryToParseFunctionCall(id);
+    if (currentToken.type == TokenType::Assignment)
+        return TryToParseAssignStatement(id);
+    ErrorHandler::printParserError(currentToken, "expected ) or =\n");
+    return nullptr;
+}
+std::unique_ptr<AssignStatement> Parser::TryToParseAssignStatement(std::string id){
+    if (currentToken.type != TokenType::Assignment)
+    {
+        ErrorHandler::printParserError(currentToken, " No assignment op. Expected assignment op ");
+        return nullptr;
+    }
+    getNextToken();
+    auto var = std::make_unique<VariableAccess>(VariableAccess(id));
+
+    auto s = TryToParseExpression();
+    if(!s)
+        ErrorHandler::printParserError(currentToken,  "failed to parse expression in assStatement\n");;
+    if (currentToken.type == TokenType::Right_parentheses)
+        getNextToken();
+    return std::make_unique<AssignStatement>(AssignStatement(std::move(var), std::move(s)));
 }
 std::vector<VariableDeclr> Parser::TryToParseParameters(){
     std::vector<VariableDeclr> parameters;
@@ -90,14 +138,14 @@ std::vector<VariableDeclr> Parser::TryToParseParameters(){
         TypeOfData tod = getTypeOfData(currentToken.type);
         getNextToken();
         expect(TokenType::Id, "no id after type\n");
-        std::string paramid = std::get<std::string>(currentToken.value);
-        parameters.push_back(VariableDeclr(paramid, tod));
+        std::string param_id = std::get<std::string>(currentToken.value);
+        parameters.push_back(VariableDeclr(param_id, tod));
         getNextToken();
     } while (currentToken.type == TokenType::Comma);
 
     return parameters;
 }
-std::unique_ptr<INode> Parser::TryToParseVariableDeclaration(){
+std::unique_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
     if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float
     && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff)
         return nullptr;
