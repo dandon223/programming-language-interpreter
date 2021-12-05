@@ -10,7 +10,7 @@
 #include "../modules/errorHandler/ErrorHandler.h"
 #include "../modules/errorHandler/ErrorHandler.cpp"
 
-BOOST_AUTO_TEST_SUITE(Basic_tests)
+BOOST_AUTO_TEST_SUITE(Lexer_basic_tests)
 
 BOOST_AUTO_TEST_CASE( Lesser_or_equal_than )
     {

@@ -24,6 +24,7 @@ class Return;
 class Function;
 class Body;
 class If;
+class Else;
 class While;
 class Condition;
 class RelationalCondition;
@@ -56,6 +57,7 @@ public:
     virtual void visit(Return &element,int indentation) = 0;
     virtual void visit(While &element,int indentation) = 0;
     virtual void visit(If &element,int indentation) = 0;
+    virtual void visit(Else &element,int indentation) = 0;
     virtual void visit(Condition &element,int indentation) = 0;
     virtual void visit(RelationalCondition &element,int indentation) = 0;
     virtual void visit(AssignStatement &element,int indentation) = 0;
@@ -237,8 +239,6 @@ public:
     };
 
 };
-
-
 class Variable : public INode
 {
 public:
@@ -315,6 +315,16 @@ public:
     std::unique_ptr<Body> body;
     If(){};
     If(std::unique_ptr<IExpression> _condition, std::unique_ptr<Body> _body) : condition(std::move(_condition)), body(std::move(_body)){};
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
+class Else : public INode
+{
+public:
+    std::unique_ptr<Body> body;
+    Else(){};
+    Else(std::unique_ptr<Body> _body) : body(std::move(_body)){};
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
@@ -545,6 +555,14 @@ public:
         debug += spaces+"Entered If\n";
         if(element.condition != nullptr)
             element.condition->accept(*this,indentation+2);
+        if(element.body != nullptr)
+            element.body->accept(*this,indentation+2);
+    };
+    void visit(Else &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"Entered Else\n";
         if(element.body != nullptr)
             element.body->accept(*this,indentation+2);
     };

@@ -93,10 +93,23 @@ std::unique_ptr<Body> Parser::TryToParseBody(int indentation) {
             statements.push_back(std::move(z));
         }else if(auto y = TryToParseWhileStatement(indentation+4)){
             statements.push_back(std::move(y));
-        }else if(auto c = TryToParseIfStatement(indentation+4))
+        }else if(auto c = TryToParseIfStatement(indentation+4)){
             statements.push_back(std::move(c));
+        }else if(auto q = TryToParseElseStatement(indentation+4)){
+            statements.push_back(std::move(q));
+        }
     }
     return std::make_unique<Body>(Body(std::move(statements)));
+}
+std::unique_ptr<Else> Parser::TryToParseElseStatement(int indentation){
+    if (currentToken.type != TokenType::Else)
+        return nullptr;
+    getNextToken();
+    expect_and_accept(TokenType::Colon, "no : after else");
+    auto body = TryToParseBody(indentation);
+    if(body == nullptr)
+        ErrorHandler::printParserError(currentToken,"if statement has no body");
+    return std::make_unique<Else>(Else(std::move(body)));
 }
 std::unique_ptr<If> Parser::TryToParseIfStatement(int indentation){
     if (currentToken.type != TokenType::If)
@@ -140,7 +153,7 @@ std::unique_ptr<INode> Parser::TryToParseAssignOrFunCall(){
         return TryToParseFunctionCall(id);
     if (currentToken.type == TokenType::Assignment)
         return TryToParseAssignStatement(id);
-    ErrorHandler::printParserError(currentToken, "expected ) or =\n");
+    ErrorHandler::printParserError(currentToken, "expected ( or =\n");
     return nullptr;
 }
 std::unique_ptr<AssignStatement> Parser::TryToParseAssignStatement(std::string id){

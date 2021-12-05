@@ -29,6 +29,7 @@ private:
     std::unique_ptr<Return> TryToParseReturnStatement();
     std::unique_ptr<While>TryToParseWhileStatement(int indentation);
     std::unique_ptr<If> TryToParseIfStatement(int indentation);
+    std::unique_ptr<Else> TryToParseElseStatement(int indentation);
     std::unique_ptr<IExpression> TryToParseCondition();
     std::unique_ptr<IExpression> TryToParseRelationalCondition();
     std::unique_ptr<IExpression> TryToParseBasicCondition();
