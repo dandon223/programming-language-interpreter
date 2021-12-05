@@ -390,11 +390,15 @@ public:
     };
     void visit(Program &element,int indentation) override
     {
-        for(auto &declaration : element.declarations)
-            visit(declaration.operator*(),indentation);
+        for(auto &declaration : element.declarations){
+            if(declaration != nullptr)
+                visit(declaration.operator*(),indentation);
+        }
         debug += "----------------------------------------\n";
-        for(auto &function : element.functions)
-            visit(function.operator*(),indentation);
+        for(auto &function : element.functions){
+            if(function != nullptr)
+                visit(function.operator*(),indentation);
+        }
     };
 
     void visit(AdvExpression &element,int indentation) override{
@@ -407,9 +411,11 @@ public:
         if(element.wasMinus)
             debug +=", Minus";
         debug+="]\n";
-        element.left.operator*().accept(*this,indentation+2);
+        if(element.left != nullptr)
+            element.left.operator*().accept(*this,indentation+2);
         debug += spaces+"Operator: " +element.operationType+"\n";
-        element.right.operator*().accept(*this,indentation+2);
+        if(element.right != nullptr)
+            element.right.operator*().accept(*this,indentation+2);
     };
     void visit(Expression &element,int indentation) override{
         std::string spaces;
@@ -421,9 +427,11 @@ public:
         if(element.wasMinus)
             debug +=", Minus";
         debug+="]\n";
-        element.left.operator*().accept(*this,indentation+2);
+        if(element.left != nullptr)
+            element.left.operator*().accept(*this,indentation+2);
         debug += spaces+"Operator: " +element.operationType+"\n";
-        element.right.operator*().accept(*this,indentation+2);
+        if(element.right != nullptr)
+            element.right.operator*().accept(*this,indentation+2);
         debug += spaces+"exited Expression\n";
     };
     void visit(BasicExpression &element ,int indentation) override{
@@ -435,7 +443,8 @@ public:
             debug += " Negation, ";
         if(element.wasMinus)
             debug +="Minus, ";
-        element.basic->accept(*this,indentation+2);
+        if(element.basic != nullptr)
+            element.basic->accept(*this,indentation+2);
     };
     void visit(Declaration &element,int indentation) override{
         std::string spaces;
@@ -461,9 +470,9 @@ public:
         debug += spaces+"entered FunCall [ name = "+element.id+",args:\n";
         for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++){
             debug += spaces;
-            element.arguments[i]->accept(*this,indentation+2);
+            if(element.arguments[i] != nullptr)
+                element.arguments[i]->accept(*this,indentation+2);
         }
-
         debug += spaces+"]\n";
     };
     void visit(Function &element,int indentation) override{
@@ -473,7 +482,8 @@ public:
         debug+=spaces + "Function [ name = "+element.name+", returnType = "+TypeOfDataToString.at(static_cast<const int>(element.dataType))+", parameters:\n";
         for(auto a : element.parameters)
             a.accept(*this,indentation+2);
-        element.body->accept(*this,indentation+2);
+        if(element.body != nullptr)
+            element.body->accept(*this,indentation+2);
     };
     void visit(Body &element,int indentation) override{
         std::string spaces;
@@ -481,7 +491,8 @@ public:
             spaces += " ";
         debug+=spaces+",Body [\n";
         for(long long unsigned int i = 0 ; i < element.statements.size() ; i++){
-            element.statements[i]->accept(*this,indentation+2);
+            if(element.statements[i] != nullptr)
+                element.statements[i]->accept(*this,indentation+2);
         }
     };
     void visit(AssignStatement &element,int indentation) override{
@@ -489,8 +500,10 @@ public:
         for(int i = 0; i < indentation; i++)
             spaces += " ";
         debug+= spaces+"entered AssignStatement [ ";
-        element.var->accept(*this,indentation+2);
-        element.assignable->accept(*this,indentation+2);
+        if(element.var != nullptr)
+            element.var->accept(*this,indentation+2);
+        if(element.assignable != nullptr)
+            element.assignable->accept(*this,indentation+2);
     }
     void visit(Int &element,int indentation) override{
         debug+="Type = Int, Value = " + std::to_string(element.value) +"]\n";
@@ -549,11 +562,24 @@ public:
             element.left.operator*().accept(*this,indentation+2);
         debug += spaces+"Operator: " +element.operationType+"\n";
         if(element.right != nullptr)
-        element.right.operator*().accept(*this,indentation+2);
+            element.right.operator*().accept(*this,indentation+2);
         debug += spaces+"Exited Condition\n";
     }
     void visit(RelationalCondition &element,int indentation) override{
-        debug += "Entered RelationalCondition\n";
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"entered RelationalCondition [";
+        if(element.wasNegation)
+            debug += " Negation";
+        if(element.wasMinus)
+            debug +=", Minus";
+        debug+="]\n";
+        if(element.left != nullptr)
+            element.left.operator*().accept(*this,indentation+2);
+        debug += spaces+"Operator: " +element.operationType+"\n";
+        if(element.right != nullptr)
+            element.right.operator*().accept(*this,indentation+2);
     }
 
 

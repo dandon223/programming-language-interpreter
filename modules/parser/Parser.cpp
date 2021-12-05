@@ -47,6 +47,10 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
     return std::make_unique<Program>(Program(std::move(variable_declarations),std::move(functions)));
 }
 std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(int indentation){
+    if(indentation>0){
+        ErrorHandler::printParserError(currentToken,"indentation before function def or global variable should be 0");
+        return nullptr;
+    }
     auto s = TryToParseFunction(indentation);
     if(s)
         return s;
@@ -103,6 +107,8 @@ std::unique_ptr<If> Parser::TryToParseIfStatement(int indentation){
         ErrorHandler::printParserError(currentToken,"not able to parse condition");
     expect_and_accept(TokenType::Colon, "no : after condition");
     auto body = TryToParseBody(indentation);
+    if(body == nullptr)
+        ErrorHandler::printParserError(currentToken,"if statement has no body");
     return std::make_unique<If>(If(std::move(condition), std::move(body)));
 }
 std::unique_ptr<While> Parser::TryToParseWhileStatement(int indentation){
@@ -114,6 +120,8 @@ std::unique_ptr<While> Parser::TryToParseWhileStatement(int indentation){
         ErrorHandler::printParserError(currentToken,"not able to parse condition");
     expect_and_accept(TokenType::Colon, "no : after condition");
     auto body = TryToParseBody(indentation);
+    if(body == nullptr)
+        ErrorHandler::printParserError(currentToken,"while statement has no body");
     return std::make_unique<While>(While(std::move(condition), std::move(body)));
 }
 std::unique_ptr<Return> Parser::TryToParseReturnStatement(){
@@ -146,7 +154,7 @@ std::unique_ptr<AssignStatement> Parser::TryToParseAssignStatement(std::string i
 
     auto s = TryToParseExpression();
     if(!s)
-        ErrorHandler::printParserError(currentToken,  "failed to parse expression in assStatement\n");;
+        ErrorHandler::printParserError(currentToken,  "failed to parse expression in AssignStatement\n");;
     if (currentToken.type == TokenType::Right_parentheses)
         getNextToken();
     return std::make_unique<AssignStatement>(AssignStatement(std::move(var), std::move(s)));

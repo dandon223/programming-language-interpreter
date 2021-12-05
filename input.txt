@@ -1,3 +1,5 @@
+int c
 fun int a(float c, date d):
-	if a:
-		return
+	if (a >1):
+		while x:
+			x = !x+1
