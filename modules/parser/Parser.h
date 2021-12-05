@@ -26,6 +26,13 @@ private:
     std::unique_ptr<IExpression> TryToParseAdvancedExpression();
     std::unique_ptr<IExpression> TryToParseBasicExpression();
     std::unique_ptr<FunCall> TryToParseFunctionCall(std::string id);
+    std::unique_ptr<Return> TryToParseReturnStatement();
+    std::unique_ptr<While>TryToParseWhileStatement(int indentation);
+    std::unique_ptr<If> TryToParseIfStatement(int indentation);
+    std::unique_ptr<IExpression> TryToParseCondition();
+    std::unique_ptr<IExpression> TryToParseRelationalCondition();
+    std::unique_ptr<IExpression> TryToParseBasicCondition();
+    std::unique_ptr<IExpression> TryToParseParenthesisCondition();
     std::unique_ptr<Body> TryToParseBody(int indentation);
     std::vector<std::shared_ptr<IExpression>> TryToParseArguments();
     std::vector<VariableDeclr> TryToParseParameters();
@@ -35,6 +42,8 @@ private:
     TypeOfData getTypeOfData(TokenType type);
     std::string getOperatorType();
     std::unique_ptr<Expression>CreateExpression(std::string basicString, std::unique_ptr<IExpression> expression, std::unique_ptr<IExpression> expression1);
+    std::unique_ptr<Condition> CreateCondition(std::string basicString, std::unique_ptr<IExpression> expression, std::unique_ptr<IExpression> expression1);
+    std::unique_ptr<RelationalCondition> CreateRelationalCondition(std::string basicString, std::unique_ptr<IExpression> expression, std::unique_ptr<IExpression> expression1);
     std::unique_ptr<AdvExpression>CreateAdvExpression(std::string basicString, std::unique_ptr<IExpression> expression, std::unique_ptr<IExpression> expression1);
 };
 

@@ -85,9 +85,43 @@ std::unique_ptr<Body> Parser::TryToParseBody(int indentation) {
             statements.push_back(std::move(s));
         }else if(auto x = TryToParseAssignOrFunCall()){
             statements.push_back(std::move(x));
-        }
+        }else if(auto z = TryToParseReturnStatement()){
+            statements.push_back(std::move(z));
+        }else if(auto y = TryToParseWhileStatement(indentation+4)){
+            statements.push_back(std::move(y));
+        }else if(auto c = TryToParseIfStatement(indentation+4))
+            statements.push_back(std::move(c));
     }
     return std::make_unique<Body>(Body(std::move(statements)));
+}
+std::unique_ptr<If> Parser::TryToParseIfStatement(int indentation){
+    if (currentToken.type != TokenType::If)
+        return nullptr;
+    getNextToken();
+    auto condition = TryToParseCondition();
+    if(condition == nullptr)
+        ErrorHandler::printParserError(currentToken,"not able to parse condition");
+    expect_and_accept(TokenType::Colon, "no : after condition");
+    auto body = TryToParseBody(indentation);
+    return std::make_unique<If>(If(std::move(condition), std::move(body)));
+}
+std::unique_ptr<While> Parser::TryToParseWhileStatement(int indentation){
+    if (currentToken.type != TokenType::While)
+        return nullptr;
+    getNextToken();
+    auto condition = TryToParseCondition();
+    if(condition == nullptr)
+        ErrorHandler::printParserError(currentToken,"not able to parse condition");
+    expect_and_accept(TokenType::Colon, "no : after condition");
+    auto body = TryToParseBody(indentation);
+    return std::make_unique<While>(While(std::move(condition), std::move(body)));
+}
+std::unique_ptr<Return> Parser::TryToParseReturnStatement(){
+    if (currentToken.type != TokenType::Return)
+        return nullptr;
+    getNextToken();
+    auto expr = TryToParseExpression();
+    return std::make_unique<Return>(Return(std::move(expr)));
 }
 std::unique_ptr<INode> Parser::TryToParseAssignOrFunCall(){
     if (currentToken.type != TokenType::Id)
@@ -187,9 +221,24 @@ std::unique_ptr<IExpression> Parser::TryToParseExpression() {
     }
     return left;
 }
+std::unique_ptr<IExpression> Parser::TryToParseCondition() {
+    std::string my_operator;
+    auto left = TryToParseRelationalCondition();
+    if (left == nullptr)
+        return nullptr;
+    while (currentToken.type == TokenType::And_operator|| currentToken.type == TokenType::Or_operator)
+    {
+        my_operator = getOperatorType();
+        getNextToken();
+        auto right = TryToParseRelationalCondition();
+        if(right == nullptr)
+            ErrorHandler::printParserError(currentToken, "no expression after "+my_operator);
+        left = CreateCondition(my_operator,std::move(left),std::move(right));
+    }
+    return left;
+}
 std::unique_ptr<IExpression> Parser::TryToParseAdvancedExpression()
 {
-
     std::string my_operator;
     auto left = TryToParseBasicExpression();
     if (left == nullptr)
@@ -202,6 +251,23 @@ std::unique_ptr<IExpression> Parser::TryToParseAdvancedExpression()
         if(right == nullptr)
             ErrorHandler::printParserError(currentToken, "no expression after "+my_operator);
         left = CreateAdvExpression(my_operator,std::move(left),std::move(right));
+    }
+    return left;
+}
+std::unique_ptr<IExpression> Parser::TryToParseRelationalCondition(){
+    std::string my_operator;
+    auto left = TryToParseBasicCondition();
+    if (left == nullptr)
+        return nullptr;
+    while (currentToken.type == TokenType::Equals || currentToken.type == TokenType::Not_equals || currentToken.type == TokenType::Lesser_than ||
+            currentToken.type == TokenType::Lesser_or_equal_than || currentToken.type == TokenType::Greater_than ||currentToken.type == TokenType::Greater_or_equal_than )
+    {
+        my_operator = getOperatorType();
+        getNextToken();
+        auto right = TryToParseBasicCondition();
+        if(right == nullptr)
+            ErrorHandler::printParserError(currentToken, "no expression after "+my_operator);
+        left = CreateRelationalCondition(my_operator,std::move(left),std::move(right));
     }
     return left;
 }
@@ -253,13 +319,35 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         return expr;
     }
     return nullptr;
-
+}
+std::unique_ptr<IExpression> Parser::TryToParseBasicCondition(){
+    bool wasNegation = false;
+    if (currentToken.type == TokenType::Negation){
+        wasNegation = true;
+        getNextToken();
+    }
+    if(currentToken.type == TokenType::Left_parentheses){
+        auto condition = TryToParseParenthesisCondition();
+        condition->wasNegation = wasNegation;
+        return condition;
+    }
+    if(auto expression = TryToParseExpression()){
+        expression->wasNegation = wasNegation;
+        return expression;
+    }
+    return nullptr;
+}
+std::unique_ptr<IExpression> Parser::TryToParseParenthesisCondition(){
+    expect_and_accept(TokenType::Left_parentheses, "no left parenthesis");
+    auto condition = TryToParseCondition();
+    expect_and_accept(TokenType::Right_parentheses, "no right parenthesis");
+    return condition;
 }
 std::unique_ptr<IExpression> Parser::TryToParseParenthesisExpresion(){
     expect_and_accept(TokenType::Left_parentheses, "no left parenthesis");
-    auto expr = TryToParseExpression();
+    auto expression = TryToParseExpression();
     expect_and_accept(TokenType::Right_parentheses, "no right parenthesis");
-    return expr;
+    return expression;
 }
 std::unique_ptr<FunCall> Parser::TryToParseFunctionCall(std::string id){
     if(currentToken.type != TokenType::Left_parentheses)
@@ -303,6 +391,14 @@ std::unique_ptr<AdvExpression> Parser::CreateAdvExpression(std::string my_operat
 
     return std::make_unique<AdvExpression>(AdvExpression(my_operator, std::move(left),std::move(right)));
 }
+std::unique_ptr<RelationalCondition> Parser::CreateRelationalCondition(std::string my_operator, std::unique_ptr<IExpression> left, std::unique_ptr<IExpression> right){
+
+    return std::make_unique<RelationalCondition>(RelationalCondition(my_operator, std::move(left),std::move(right)));
+}
+std::unique_ptr<Condition> Parser::CreateCondition(std::string my_operator, std::unique_ptr<IExpression> left, std::unique_ptr<IExpression> right) {
+
+    return std::make_unique<Condition>(Condition(my_operator, std::move(left),std::move(right)));
+}
 TypeOfData Parser::getTypeOfData(TokenType type){
     if (type == TokenType::Int)
         return TypeOfData::Integer;
@@ -324,6 +420,22 @@ std::string Parser::getOperatorType(){
         return "*";
     if(currentToken.type == TokenType::Divide)
         return "/";
+    if(currentToken.type == TokenType::And_operator)
+        return "and";
+    if(currentToken.type == TokenType::Or_operator)
+        return "or";
+    if(currentToken.type == TokenType::Lesser_than)
+        return "<";
+    if(currentToken.type == TokenType::Lesser_or_equal_than)
+        return "<=";
+    if(currentToken.type == TokenType::Greater_than)
+        return ">";
+    if(currentToken.type == TokenType::Greater_or_equal_than)
+        return ">=";
+    if(currentToken.type == TokenType::Equals)
+        return "==";
+    if(currentToken.type == TokenType::Not_equals)
+        return "!=";
     return "";
 }
 void Parser::expect_and_accept(TokenType ttype, std::string message)

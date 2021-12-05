@@ -20,8 +20,13 @@ class Variable;
 class VariableAccess;
 class Program;
 class FunCall;
+class Return;
 class Function;
 class Body;
+class If;
+class While;
+class Condition;
+class RelationalCondition;
 class Int;
 class Double;
 class String;
@@ -48,7 +53,11 @@ class Visitor
 {
 public:
     virtual void visit(Declaration &element,int indentation) = 0;
-    //virtual void visit(INode &element,int indentation) = 0; AssignStatement
+    virtual void visit(Return &element,int indentation) = 0;
+    virtual void visit(While &element,int indentation) = 0;
+    virtual void visit(If &element,int indentation) = 0;
+    virtual void visit(Condition &element,int indentation) = 0;
+    virtual void visit(RelationalCondition &element,int indentation) = 0;
     virtual void visit(AssignStatement &element,int indentation) = 0;
     virtual void visit(FunCall &element,int indentation) = 0;
     virtual void visit(VariableAccess &element,int indentation) = 0;
@@ -75,7 +84,8 @@ public:
 class IExpression : public INode
 {
 public:
-    bool wasMinus;
+    bool wasMinus = false;
+    bool wasNegation = false;
 };
 class Int : public INode
 {
@@ -263,10 +273,67 @@ public:
         v.visit(*this,indentation);
     }
 };
+class Return : public INode
+{
+public:
+    std::unique_ptr<IExpression> expression;
+    Return(){};
+    Return(std::unique_ptr<IExpression> _expression) : expression(std::move(_expression)){};
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
+class Condition : public IExpression
+{
+public:
+    std::string operationType;
+    std::unique_ptr<IExpression> left;
+    std::unique_ptr<IExpression> right;
+    Condition(){};
+    Condition(std::string _operationType, std::unique_ptr<IExpression> _left,
+              std::unique_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
+class RelationalCondition :public IExpression
+{
+public:
+    std::string operationType;
+    std::unique_ptr<IExpression> left;
+    std::unique_ptr<IExpression> right;
+    RelationalCondition(){};
+    RelationalCondition(std::string _operationType, std::unique_ptr<IExpression> _left, std::unique_ptr<IExpression> _right) : operationType(_operationType), left(std::move(_left)), right(std::move(_right)){};
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
+class If : public INode
+{
+public:
+    std::unique_ptr<IExpression> condition;
+    std::unique_ptr<Body> body;
+    If(){};
+    If(std::unique_ptr<IExpression> _condition, std::unique_ptr<Body> _body) : condition(std::move(_condition)), body(std::move(_body)){};
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
+class While : public INode
+{
+public:
+    std::unique_ptr<IExpression> condition;
+    std::unique_ptr<Body> body;
+    While(){};
+    While(std::unique_ptr<IExpression> _condition, std::unique_ptr<Body> _body) : condition(std::move(_condition)), body(std::move(_body)){};
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
 class Body : public INode
 {
 public:
-    std::vector<std::shared_ptr<INode>> statements; // declaration, assignStatement, FunCall
+    std::vector<std::shared_ptr<INode>> statements; // declaration, assignStatement, FunCall, Return, While,
 
     Body(std::vector<std::shared_ptr<INode>>_statements) : statements(std::move(_statements)){};
     Body(){};
@@ -334,7 +401,12 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered AdvExpression\n";
+        debug += spaces+"entered AdvExpression [";
+        if(element.wasNegation)
+            debug += " Negation";
+        if(element.wasMinus)
+            debug +=", Minus";
+        debug+="]\n";
         element.left.operator*().accept(*this,indentation+2);
         debug += spaces+"Operator: " +element.operationType+"\n";
         element.right.operator*().accept(*this,indentation+2);
@@ -344,10 +416,11 @@ public:
         for(int i = 0; i < indentation; i++)
             spaces += " ";
         debug += spaces+"entered Expression[";
+        if(element.wasNegation)
+            debug += " Negation";
         if(element.wasMinus)
-            debug += " Is Minus = true]\n";
-        else
-            debug += "]\n";
+            debug +=", Minus";
+        debug+="]\n";
         element.left.operator*().accept(*this,indentation+2);
         debug += spaces+"Operator: " +element.operationType+"\n";
         element.right.operator*().accept(*this,indentation+2);
@@ -358,10 +431,10 @@ public:
         for(int i = 0; i < indentation; i++)
             spaces += " ";
         debug += spaces+"entered BasicExpression [";
+        if(element.wasNegation)
+            debug += " Negation, ";
         if(element.wasMinus)
-            debug +="Is Minus = true, ";
-        else
-            debug +="Is Minus = false, ";
+            debug +="Minus, ";
         element.basic->accept(*this,indentation+2);
     };
     void visit(Declaration &element,int indentation) override{
@@ -434,9 +507,54 @@ public:
     void visit(TimeDiff &element,int indentation) override{
         debug+="Type = TimeDiff, Value = " + element.toString() +"]\n";
     };
-//    void visit(INode &element,int indentation) override{
-//        debug += "INODE\n";
-//    }
+    void visit(Return &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"Entered Return\n";
+        if(element.expression != nullptr)
+            element.expression->accept(*this,indentation+2);
+    }
+    void visit(While &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"Entered While\n";
+        if(element.condition != nullptr)
+            element.condition->accept(*this,indentation+2);
+        if(element.body != nullptr)
+            element.body->accept(*this,indentation+2);
+    };
+    void visit(If &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"Entered If\n";
+        if(element.condition != nullptr)
+            element.condition->accept(*this,indentation+2);
+        if(element.body != nullptr)
+            element.body->accept(*this,indentation+2);
+    };
+    void visit(Condition &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"Entered Condition [";
+        if(element.wasNegation)
+            debug +=" Negation";
+        if(element.wasMinus)
+            debug +=", Minus";
+        debug += "]\n";
+        if(element.left != nullptr)
+            element.left.operator*().accept(*this,indentation+2);
+        debug += spaces+"Operator: " +element.operationType+"\n";
+        if(element.right != nullptr)
+        element.right.operator*().accept(*this,indentation+2);
+        debug += spaces+"Exited Condition\n";
+    }
+    void visit(RelationalCondition &element,int indentation) override{
+        debug += "Entered RelationalCondition\n";
+    }
 
 
 };
