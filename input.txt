@@ -1,5 +1,4 @@
-fun int a():
-	if x:
-		return 1
-	else:
-		return 2
+fun string start():
+	string napis = (1)
+	if ([2000:01:01]) - a > {0y1m0d}:
+		print("Tak")

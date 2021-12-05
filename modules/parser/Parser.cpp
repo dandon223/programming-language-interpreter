@@ -38,12 +38,11 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
             expect_and_accept(TokenType::Indentation,"no indentation at the begining of variable declaration");
         }
     }
-    if (!variable_declarations.empty() || !functions.empty()){
+    expect_and_accept(TokenType::End_of_text,"expected end of stream, did not parse everything");
+    if (!variable_declarations.empty() || !functions.empty())
         std::cout << "Parsing Successfull\n";
-    }
-    else{
+    else
         std::cout << "Parsing Unsuccessful or empty file\n";
-    }
     return std::make_unique<Program>(Program(std::move(variable_declarations),std::move(functions)));
 }
 std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(int indentation){
@@ -356,6 +355,7 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicCondition(){
         expression->wasNegation = wasNegation;
         return expression;
     }
+
     return nullptr;
 }
 std::unique_ptr<IExpression> Parser::TryToParseParenthesisCondition(){
