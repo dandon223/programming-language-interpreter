@@ -293,8 +293,12 @@ std::unique_ptr<IExpression> Parser::TryToParseRelationalCondition(){
 }
 std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
 {
-
     std::unique_ptr<INode> basic;
+    bool wasNegation = false;
+    if (currentToken.type == TokenType::Negation){
+        wasNegation = true;
+        getNextToken();
+    }
     bool wasMinus = false;
     if (currentToken.type == TokenType::Minus)
     {
@@ -308,22 +312,22 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         else
             basic = std::make_unique<Double>(std::get<double>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::StringValue){
         basic = std::make_unique<String>(std::get<std::string>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::DateValue){
         basic = std::make_unique<Date>(std::get<Date>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::TimeDiffValue){
         basic =std::make_unique<TimeDiff>(std::get<TimeDiff>(currentToken.value));
         getNextToken();
-        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if(currentToken.type == TokenType::Id){
         std::string id = std::get<std::string>(currentToken.value);
@@ -332,10 +336,12 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         auto function = TryToParseFunctionCall(id);
         if(function)
             basic = std::move(function);
-        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus));
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if(currentToken.type == TokenType::Left_parentheses){
         auto expr = TryToParseParenthesisExpresion();
+        expr->wasMinus = wasMinus;
+        expr->wasNegation = wasNegation;
         return expr;
     }
     return nullptr;
@@ -346,29 +352,42 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicCondition(){
         wasNegation = true;
         getNextToken();
     }
+    bool wasMinus = false;
+    if (currentToken.type == TokenType::Minus)
+    {
+        wasMinus = true;
+        getNextToken();
+    }
     if(currentToken.type == TokenType::Left_parentheses){
         auto condition = TryToParseParenthesisCondition();
+        while(currentToken.type == TokenType::Minus || currentToken.type == TokenType::Plus || currentToken.type == TokenType::Multiply || currentToken.type == TokenType::Divide){
+            std::string op =getOperatorType();
+            getNextToken();
+            auto right = TryToParseExpression();
+            condition = CreateExpression(op,std::move(condition),std::move(right));
+        }
         condition->wasNegation = wasNegation;
+        condition->wasMinus = wasMinus;
         return condition;
     }
-    if(auto expression = TryToParseExpression()){
+    else if(auto expression = TryToParseExpression()){
         expression->wasNegation = wasNegation;
+        expression->wasMinus = wasMinus;
         return expression;
     }
-
     return nullptr;
 }
 std::unique_ptr<IExpression> Parser::TryToParseParenthesisCondition(){
     expect_and_accept(TokenType::Left_parentheses, "no left parenthesis");
     auto condition = TryToParseCondition();
     expect_and_accept(TokenType::Right_parentheses, "no right parenthesis");
-    return condition;
+    return std::make_unique<ParenthesisExpression>(ParenthesisExpression(std::move(condition)));
 }
 std::unique_ptr<IExpression> Parser::TryToParseParenthesisExpresion(){
     expect_and_accept(TokenType::Left_parentheses, "no left parenthesis");
     auto expression = TryToParseExpression();
     expect_and_accept(TokenType::Right_parentheses, "no right parenthesis");
-    return expression;
+    return std::make_unique<ParenthesisExpression>(ParenthesisExpression(std::move(expression)));
 }
 std::unique_ptr<FunCall> Parser::TryToParseFunctionCall(std::string id){
     if(currentToken.type != TokenType::Left_parentheses)

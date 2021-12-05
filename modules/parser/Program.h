@@ -12,6 +12,7 @@
 class Declaration;
 class VariableDeclr;
 class Expression;
+class ParenthesisExpression;
 class IExpression;
 class AssignStatement;
 class AdvExpression;
@@ -66,6 +67,7 @@ public:
     virtual void visit(Variable &element,int indentation) = 0;
     virtual void visit(VariableDeclr &element,int indentation) = 0;
     virtual void visit(Expression &element,int indentation) = 0;
+    virtual void visit(ParenthesisExpression &element,int indentation) = 0;
     virtual void visit(AdvExpression &element,int indentation) = 0;
     virtual void visit(BasicExpression &element, int indentation) = 0;
     virtual void visit(Program &element,int indentation) = 0;
@@ -227,6 +229,16 @@ public:
         v.visit(*this,indentation);
     }
 };
+class ParenthesisExpression : public IExpression
+{
+public:
+    std::unique_ptr<IExpression> child;
+    ParenthesisExpression(){};
+    ParenthesisExpression(std::unique_ptr<IExpression> _child) : child(std::move(_child)){};
+    void accept(Visitor &v,int indentation) override {
+        v.visit(*this,indentation);
+    }
+};
 class Declaration : public INode
 {
 public:
@@ -268,7 +280,7 @@ class BasicExpression :public IExpression
 public:
     std::unique_ptr<INode> basic;
     BasicExpression(){};
-    BasicExpression(std::unique_ptr<INode> _basic, bool _wasMinus) : basic(std::move(_basic)){wasMinus = _wasMinus;};
+    BasicExpression(std::unique_ptr<INode> _basic, bool _wasMinus,bool _wasNegation) : basic(std::move(_basic)){wasMinus = _wasMinus;wasNegation = _wasNegation;};
     void accept(Visitor &v,int indentation) override {
         v.visit(*this,indentation);
     }
@@ -393,7 +405,7 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered VariableDeclr [";
+        debug += spaces+"Entered VariableDeclr [";
         debug += "Type of data: " + TypeOfDataToString.at(static_cast<const int>(element.getTypeOfData())) + "," ;
         debug += "Id: " + element.getId()+"]\n";
 
@@ -415,7 +427,7 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered AdvExpression [";
+        debug += spaces+"Entered AdvExpression [";
         if(element.wasNegation)
             debug += " Negation";
         if(element.wasMinus)
@@ -431,7 +443,7 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered Expression[";
+        debug += spaces+"Entered Expression[";
         if(element.wasNegation)
             debug += " Negation";
         if(element.wasMinus)
@@ -442,13 +454,25 @@ public:
         debug += spaces+"Operator: " +element.operationType+"\n";
         if(element.right != nullptr)
             element.right.operator*().accept(*this,indentation+2);
-        debug += spaces+"exited Expression\n";
+    };
+    void visit(ParenthesisExpression &element,int indentation) override{
+        std::string spaces;
+        for(int i = 0; i < indentation; i++)
+            spaces += " ";
+        debug += spaces+"Entered ParenthesisExpression[";
+        if(element.wasNegation)
+            debug += " Negation";
+        if(element.wasMinus)
+            debug +=", Minus";
+        debug+="]\n";
+        if(element.child != nullptr)
+            element.child.operator*().accept(*this,indentation+2);
     };
     void visit(BasicExpression &element ,int indentation) override{
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered BasicExpression [";
+        debug += spaces+"Entered BasicExpression [";
         if(element.wasNegation)
             debug += " Negation, ";
         if(element.wasMinus)
@@ -460,15 +484,13 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered Declaration\n";
+        debug += spaces+"Entered Declaration\n";
         visit(element.var,indentation+2);
         if(element.assignable != nullptr)
             element.assignable.operator*().accept(*this,indentation+2);
-        debug += spaces+"exited Declaration\n";
-
     };
     void visit(Variable &element,int indentation) override{
-        debug += "entered Variable\n";
+        debug += "Entered Variable\n";
     };
     void visit(VariableAccess &element,int indentation) override{
         debug+="Type = VariableAccess, Value = " + element.id +"]\n";
@@ -477,7 +499,7 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered FunCall [ name = "+element.id+",args:\n";
+        debug += spaces+"Entered FunCall [ name = "+element.id+",args:\n";
         for(long long unsigned int i = 0 ; i < element.arguments.size() ; i++){
             debug += spaces;
             if(element.arguments[i] != nullptr)
@@ -509,7 +531,7 @@ public:
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug+= spaces+"entered AssignStatement [ ";
+        debug+= spaces+"Entered AssignStatement [ ";
         if(element.var != nullptr)
             element.var->accept(*this,indentation+2);
         if(element.assignable != nullptr)
@@ -581,13 +603,12 @@ public:
         debug += spaces+"Operator: " +element.operationType+"\n";
         if(element.right != nullptr)
             element.right.operator*().accept(*this,indentation+2);
-        debug += spaces+"Exited Condition\n";
     }
     void visit(RelationalCondition &element,int indentation) override{
         std::string spaces;
         for(int i = 0; i < indentation; i++)
             spaces += " ";
-        debug += spaces+"entered RelationalCondition [";
+        debug += spaces+"Entered RelationalCondition [";
         if(element.wasNegation)
             debug += " Negation";
         if(element.wasMinus)
@@ -599,7 +620,5 @@ public:
         if(element.right != nullptr)
             element.right.operator*().accept(*this,indentation+2);
     }
-
-
 };
 #endif //TKOM_21Z_DANIEL_PROGRAM_H
