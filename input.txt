@@ -1,3 +1,7 @@
-fun int a():
-	if !-(a>b <1) and !1:
-		return
+fun int start(): 
+	string napis = "A" 
+	if napis =="A": 
+		print("Tak") 
+	else: 
+		print(napis) 
+	return 0 
