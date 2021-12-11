@@ -405,21 +405,6 @@ BOOST_AUTO_TEST_CASE( Lesser_or_equal_than )
         BOOST_CHECK(tokens[0].type == TokenType::Indentation);
         BOOST_CHECK(tokens[1].type != TokenType::If);
     }
-    BOOST_AUTO_TEST_CASE( NewLinesTabAndComments ){
-        std::string text = "     //FAFGAGAD  \n"
-                           " \n"
-                           "";
-        std::istringstream  handle(text);
-        Lexer lexer = Lexer(handle);
-        std::vector<Token> tokens;
-        while(!lexer.endOfFile())
-            tokens.push_back(lexer.getNextToken());
-        BOOST_CHECK(tokens[0].type == TokenType::Invalid);
-        BOOST_CHECK(std::get<std::string>(tokens[0].value) == "spacebar after indentation");
-        BOOST_CHECK(tokens[1].type == TokenType::Invalid);
-        BOOST_CHECK(tokens[2].type == TokenType::End_of_text);
-        BOOST_CHECK(tokens.size() == 3);
-    }
     BOOST_AUTO_TEST_CASE( DateAndTimeDiff ){
         std::string text = "date a [2000:10:09]\n"
                            "date b [1999:01:05]\n"

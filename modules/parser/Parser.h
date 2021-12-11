@@ -15,7 +15,7 @@ private:
 public:
     Parser(Lexer lexer);
     std::unique_ptr<Program>TryToParseProgram();
-private:
+//private:
     void getNextToken();
     void expect(TokenType ttype, std::string message);
     void expect_and_accept(TokenType ttype, std::string message);

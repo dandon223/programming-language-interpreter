@@ -1,7 +1,3 @@
-fun int start(): 
-	string napis = "A" 
-	if napis =="A": 
-		print("Tak") 
-	else: 
-		print(napis) 
-	return 0 
+fun int a():
+	if a * 1 < b:
+		return

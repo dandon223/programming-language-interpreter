@@ -15,7 +15,6 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
 {
     std::vector<std::unique_ptr<Declaration>> variable_declarations;
     std::vector<std::unique_ptr<Function>> functions;
-    std::cout << "Beginning Parsing\n";
     int indentation = 0;
     if(currentToken.type == TokenType::Indentation)
         indentation = currentToken.length;
@@ -39,10 +38,6 @@ std::unique_ptr<Program> Parser::TryToParseProgram()
         }
     }
     expect_and_accept(TokenType::End_of_text,"expected end of stream, did not parse everything");
-    if (!variable_declarations.empty() || !functions.empty())
-        std::cout << "Parsing Successfull\n";
-    else
-        std::cout << "Parsing Unsuccessful or empty file\n";
     return std::make_unique<Program>(Program(std::move(variable_declarations),std::move(functions)));
 }
 std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(int indentation){
@@ -78,6 +73,8 @@ std::unique_ptr<INode> Parser::TryToParseFunction(int indentation){
     expect_and_accept(TokenType::Right_parentheses,"no ) after parameters");
     expect_and_accept(TokenType::Colon,"no : after )");
     auto body = TryToParseBody(indentation);
+    if(body == nullptr)
+        ErrorHandler::printParserError(currentToken,"no body in function");
     return std::make_unique<Function>(Function(id,typeOfData,params,std::move(body)));
 }
 std::unique_ptr<Body> Parser::TryToParseBody(int indentation) {
@@ -156,17 +153,12 @@ std::unique_ptr<INode> Parser::TryToParseAssignOrFunCall(){
     return nullptr;
 }
 std::unique_ptr<AssignStatement> Parser::TryToParseAssignStatement(std::string id){
-    if (currentToken.type != TokenType::Assignment)
-    {
-        ErrorHandler::printParserError(currentToken, " No assignment op. Expected assignment op ");
-        return nullptr;
-    }
     getNextToken();
     auto var = std::make_unique<VariableAccess>(VariableAccess(id));
 
     auto s = TryToParseExpression();
     if(!s)
-        ErrorHandler::printParserError(currentToken,  "failed to parse expression in AssignStatement\n");;
+        ErrorHandler::printParserError(currentToken,  "failed to parse expression in AssignStatement");
     if (currentToken.type == TokenType::Right_parentheses)
         getNextToken();
     return std::make_unique<AssignStatement>(AssignStatement(std::move(var), std::move(s)));
@@ -409,8 +401,7 @@ std::vector<std::shared_ptr<IExpression>> Parser::TryToParseArguments(){
         auto s = TryToParseExpression();
         if(s == nullptr)
             ErrorHandler::printParserError(currentToken,"Failed to parse arguments");
-        if(s!= nullptr)
-            arguments.push_back(std::move(s));
+        arguments.push_back(std::move(s));
         if (currentToken.type == TokenType::Comma){
             getNextToken();
             x = true;

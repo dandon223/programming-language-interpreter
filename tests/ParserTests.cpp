@@ -184,5 +184,190 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         program->accept(printVisitor1,0);
         BOOST_CHECK(printVisitor.debug == printVisitor1.debug);
     }
+    BOOST_AUTO_TEST_CASE( parsing_arguments_empty )
+    {
+        std::string text = ")";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto arguments = parser.TryToParseArguments();
+        BOOST_CHECK(arguments.empty());
+    }
+    BOOST_AUTO_TEST_CASE( parsing_arguments_one_argument )
+    {
+        std::string text = "1)";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto arguments = parser.TryToParseArguments();
+        BOOST_CHECK(arguments.size()==1);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_arguments_no_right_parenthesis )
+    {
+        std::string text = "1";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        try {
+            auto args = parser.TryToParseArguments();
+            BOOST_CHECK(false);
+        }catch(ParserException e){
+            BOOST_CHECK(e.error == "No ) after arguments" );
+        }
+    }
+    BOOST_AUTO_TEST_CASE( parsing_fun_call_no_lef_parenthesis )
+    {
+        std::string text = ")";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto fun_call = parser.TryToParseFunctionCall("a");
+        BOOST_CHECK(fun_call == nullptr);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_fun_call )
+    {
+        std::string text = "(i,1)";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto fun_call = parser.TryToParseFunctionCall("a");
+        BOOST_CHECK(fun_call != nullptr);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_parenthesis_expresion )
+    {
+        std::string text = "()";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_expr = parser.TryToParseParenthesisExpresion();
+        BOOST_CHECK(par_expr != nullptr);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_parenthesis_condition )
+    {
+        std::string text = "()";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_con = parser.TryToParseParenthesisCondition();
+        BOOST_CHECK(par_con != nullptr);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_condition )
+    {
+        std::string text = "(1 + 2)";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_con = parser.TryToParseBasicCondition();
+        PrintVisitor printVisitor = PrintVisitor();
+        par_con->accept(printVisitor,0);
+        std::string real = "Entered ParenthesisExpression[]\n"
+                           "  Entered Expression[]\n"
+                           "    Entered BasicExpression [Type = Int, Value = 1]\n"
+                           "  Operator: +\n"
+                           "    Entered BasicExpression [Type = Int, Value = 2]\n";
+        BOOST_CHECK(real ==printVisitor.debug);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_condition2 )
+    {
+        std::string text = "!(a > b) != 10";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_con = parser.TryToParseCondition();
+        PrintVisitor printVisitor = PrintVisitor();
+        par_con->accept(printVisitor,0);
+        std::string real = "Entered RelationalCondition []\n"
+                           "  Entered ParenthesisExpression[ Negation]\n"
+                           "    Entered RelationalCondition []\n"
+                           "      Entered BasicExpression [Type = VariableAccess, Value = a]\n"
+                           "    Operator: >\n"
+                           "      Entered BasicExpression [Type = VariableAccess, Value = b]\n"
+                           "Operator: !=\n"
+                           "  Entered BasicExpression [Type = Int, Value = 10]\n";
+        BOOST_CHECK(real ==printVisitor.debug);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_expression )
+    {
+        std::string text = "1 + 4 * -2";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_con = parser.TryToParseExpression();
+        PrintVisitor printVisitor = PrintVisitor();
+        par_con->accept(printVisitor,0);
+        std::string real ="Entered Expression[]\n"
+                          "  Entered BasicExpression [Type = Int, Value = 1]\n"
+                          "Operator: +\n"
+                          "  Entered AdvExpression []\n"
+                          "    Entered BasicExpression [Type = Int, Value = 4]\n"
+                          "  Operator: *\n"
+                          "    Entered BasicExpression [Minus, Type = Int, Value = 2]\n";
+        BOOST_CHECK(real ==printVisitor.debug);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_expression_2 )
+    {
+        std::string text = "-(1 + (4 * -2))";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_con = parser.TryToParseExpression();
+        PrintVisitor printVisitor = PrintVisitor();
+        par_con->accept(printVisitor,0);
+        std::string real ="Entered ParenthesisExpression[, Minus]\n"
+                          "  Entered Expression[]\n"
+                          "    Entered BasicExpression [Type = Int, Value = 1]\n"
+                          "  Operator: +\n"
+                          "    Entered ParenthesisExpression[]\n"
+                          "      Entered AdvExpression []\n"
+                          "        Entered BasicExpression [Type = Int, Value = 4]\n"
+                          "      Operator: *\n"
+                          "        Entered BasicExpression [Minus, Type = Int, Value = 2]\n";
+        BOOST_CHECK(real ==printVisitor.debug);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_parameters )
+    {
+        std::string text = "(int a , int c)";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_con = parser.TryToParseParameters();
+        PrintVisitor printVisitor = PrintVisitor();
+        BOOST_CHECK(par_con.size()== 2);
+    }
+    BOOST_AUTO_TEST_CASE( parsing_if )
+    {
+        std::string text = "if a -1 < b:\n"
+                           "\treturn";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        lexer.getNextToken();
+        Parser parser = Parser(lexer);
+        auto par_con = parser.TryToParseIfStatement(0);
+        PrintVisitor printVisitor = PrintVisitor();
+        std::string real ="Entered If\n"
+                          "  Entered RelationalCondition []\n"
+                          "    Entered Expression[]\n"
+                          "      Entered BasicExpression [Type = VariableAccess, Value = a]\n"
+                          "    Operator: -\n"
+                          "      Entered BasicExpression [Type = Int, Value = 1]\n"
+                          "  Operator: <\n"
+                          "    Entered BasicExpression [Type = VariableAccess, Value = b]\n"
+                          "  ,Body [\n"
+                          "    Entered Return\n";
+        par_con->accept(printVisitor,0);
+        BOOST_CHECK(printVisitor.debug == real);
+    }
 
 BOOST_AUTO_TEST_SUITE_END()
