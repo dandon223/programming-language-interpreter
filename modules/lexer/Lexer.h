@@ -10,7 +10,7 @@
 #include <string>
 #include "../token/Token.h"
 class Lexer {
-private:
+public:
     int line = 1;
     int column = 0;
     std::istream &handle;
@@ -29,7 +29,7 @@ private:
     bool parseDate();
     bool parseTimeDiff();
     bool ignore_comment();
-public:
+
     Lexer(std::istream &my_handle);
     Token getNextToken();
     void getNextChar();

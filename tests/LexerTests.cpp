@@ -7,12 +7,10 @@
 #include "../modules/lexer/Lexer.cpp"
 #include "../modules/token/Token.h"
 #include "../modules/token/Token.cpp"
-#include "../modules/structures/Date.h"
-#include "../modules/structures/Date.cpp"
 #include "../modules/errorHandler/ErrorHandler.h"
 #include "../modules/errorHandler/ErrorHandler.cpp"
 
-BOOST_AUTO_TEST_SUITE(Basic_tests)
+BOOST_AUTO_TEST_SUITE(Lexer_basic_tests)
 
 BOOST_AUTO_TEST_CASE( Lesser_or_equal_than )
     {
@@ -406,21 +404,6 @@ BOOST_AUTO_TEST_CASE( Lesser_or_equal_than )
             tokens.push_back(lexer.getNextToken());
         BOOST_CHECK(tokens[0].type == TokenType::Indentation);
         BOOST_CHECK(tokens[1].type != TokenType::If);
-    }
-    BOOST_AUTO_TEST_CASE( NewLinesTabAndComments ){
-        std::string text = "     //FAFGAGAD  \n"
-                           " \n"
-                           "";
-        std::istringstream  handle(text);
-        Lexer lexer = Lexer(handle);
-        std::vector<Token> tokens;
-        while(!lexer.endOfFile())
-            tokens.push_back(lexer.getNextToken());
-        BOOST_CHECK(tokens[0].type == TokenType::Invalid);
-        BOOST_CHECK(std::get<std::string>(tokens[0].value) == "spacebar after indentation");
-        BOOST_CHECK(tokens[1].type == TokenType::Invalid);
-        BOOST_CHECK(tokens[2].type == TokenType::End_of_text);
-        BOOST_CHECK(tokens.size() == 3);
     }
     BOOST_AUTO_TEST_CASE( DateAndTimeDiff ){
         std::string text = "date a [2000:10:09]\n"

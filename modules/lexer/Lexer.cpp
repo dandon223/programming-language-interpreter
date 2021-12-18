@@ -1,7 +1,7 @@
 
 #include <cmath>
 #include "Lexer.h"
-#include "../structures/Date.h"
+#include "../parser/Program.h"
 #include "../errorHandler/ErrorHandler.h"
 Lexer::Lexer(std::istream &my_handle) : handle(my_handle){
     active_token.start_pos = handle.tellg();
@@ -39,6 +39,12 @@ Token Lexer::getNextToken(){
 
     if(parseIndentation())
         return active_token;
+    while(current_char == ' '){
+        getNextChar();
+        ignore_comment();
+        if(parseIndentation())
+            return active_token;
+    }
     if(parseKeywordOrId())
         return active_token;
     if(parseOperators())
@@ -378,6 +384,7 @@ bool Lexer::parseKeywordOrId() {
         active_token.start_pos = handle.tellg();
         getNextChar();
     }
+    ignore_comment();
     active_token.column_number = column;
     std::string word;
     if (!isalpha(current_char))
@@ -451,10 +458,10 @@ bool Lexer::parseIndentation(){
     }
     if(line >1)
         first_line = false;
-    if(current_char == '\t')
-        active_token.column_number = 0;
+    active_token.column_number = 0;
     while(current_char == '\n'){
         getNextChar();
+        active_token.line_number = line;
         ignore_comment();
     }
     if(current_char == EOF)
@@ -467,12 +474,11 @@ bool Lexer::parseIndentation(){
         number_of_indentation ++;
     }
     if(current_char == ' '){
-        active_token.line_number = line;
-        active_token.column_number = column;
+
         while(current_char == ' ' || current_char == '\t'){
             getNextChar();
         }
-
+        //active_token.line_number = line;
         active_token.type = TokenType::Invalid;
         active_token.value = "spacebar after indentation";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));
