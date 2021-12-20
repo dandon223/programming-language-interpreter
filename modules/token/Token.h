@@ -45,7 +45,10 @@ enum class TokenType
     Number = 32,
     DateValue = 33,
     TimeDiffValue = 34,
-    StringValue = 35
+    StringValue = 35,
+    Bool = 36,
+    True = 37,
+    False = 38
 
 };
 const std::unordered_map<int, std::string> print = {
@@ -86,6 +89,10 @@ const std::unordered_map<int, std::string> print = {
         {33, "DateValue"},
         {34, "TimeDiffValue"},
         {35, "StringValue"},
+        {36,"Bool"},
+        {37,"True"},
+        {38,"False"}
+
 };
 const std::unordered_map<std::string, TokenType> map = {
 
@@ -117,6 +124,9 @@ const std::unordered_map<std::string, TokenType> map = {
         {"if", TokenType::If},
         {"else", TokenType::Else},
         {"while", TokenType::While},
+        {"bool", TokenType::Bool},
+        {"True", TokenType::True},
+        {"False", TokenType::False}
 };
 struct Token
 {

@@ -31,6 +31,7 @@ class Condition;
 class RelationalCondition;
 class Int;
 class Double;
+class Bool;
 class String;
 class Date;
 class TimeDiff;
@@ -41,7 +42,8 @@ enum class TypeOfData
     Double,
     Message,
     Date,
-    TimeDiff
+    TimeDiff,
+    Bool
 };
 const std::unordered_map<int, std::string> TypeOfDataToString = {
 
@@ -49,11 +51,14 @@ const std::unordered_map<int, std::string> TypeOfDataToString = {
         {1, "Float"},
         {2,"Message" },
         {3,"Date" },
-        {4,"TimeDiff" }
+        {4,"TimeDiff" },
+        {5,"Bool" }
+
 };
 class Visitor
 {
 public:
+    virtual void visit(Bool &element,int indentation) = 0;
     virtual void visit(Declaration &element,int indentation) = 0;
     virtual void visit(Return &element,int indentation) = 0;
     virtual void visit(While &element,int indentation) = 0;
@@ -96,6 +101,16 @@ class Int : public INode
 public:
     int value;
     Int(int i):value(i){};
+    void accept(Visitor &visitor,int indentation) override
+    {
+        visitor.visit(*this,indentation);
+    };
+};
+class Bool : public INode
+{
+public:
+    bool value;
+    Bool( bool i):value(i){};
     void accept(Visitor &visitor,int indentation) override
     {
         visitor.visit(*this,indentation);
@@ -542,6 +557,14 @@ public:
     };
     void visit(Double &element,int indentation) override{
         debug+="Type = Float, Value = " + std::to_string(element.value) +"]\n";
+    };
+    void visit(Bool &element,int indentation) override{
+        std::string v = "";
+        if(element.value)
+            v = "True";
+        else
+            v = "False";
+        debug+="Type = Bool, Value = " + v+"]\n";
     };
     void visit(String &element,int indentation) override{
         debug+="Type = String, Value = " + element.value +"]\n";

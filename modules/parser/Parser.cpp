@@ -59,7 +59,7 @@ std::unique_ptr<INode> Parser::TryToParseFunction(int indentation){
     getNextToken();
 
     if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float  // typ
-        && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff){
+        && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff && currentToken.type !=TokenType::Bool){
         ErrorHandler::printParserError(currentToken,"no proper Type after 'fun'");
         return nullptr;
     }
@@ -179,7 +179,7 @@ std::vector<VariableDeclr> Parser::TryToParseParameters(){
             return parameters;
         }
         if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float  // typ
-            && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff)
+            && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff && currentToken.type != TokenType::Bool)
             ErrorHandler::printParserError(currentToken,"No valid type or no type");
         TypeOfData tod = getTypeOfData(currentToken.type);
         getNextToken();
@@ -193,7 +193,7 @@ std::vector<VariableDeclr> Parser::TryToParseParameters(){
 }
 std::unique_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
     if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float
-    && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff)
+    && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff && currentToken.type != TokenType::Bool)
         return nullptr;
 
     VariableDeclr var;
@@ -303,6 +303,14 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
             basic = std::make_unique<Int>(std::get<int>(currentToken.value));//std::get<int>(currentToken.value);
         else
             basic = std::make_unique<Double>(std::get<double>(currentToken.value));
+        getNextToken();
+        return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
+    }
+    else if (currentToken.type == TokenType::True || currentToken.type == TokenType::False){
+        if(currentToken.type == TokenType::True)
+            basic = std::make_unique<Bool>(Bool(true));
+        else
+            basic = std::make_unique<Bool>(Bool(false));
         getNextToken();
         return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
@@ -431,6 +439,8 @@ std::unique_ptr<Condition> Parser::CreateCondition(std::string my_operator, std:
     return std::make_unique<Condition>(Condition(my_operator, std::move(left),std::move(right)));
 }
 TypeOfData Parser::getTypeOfData(TokenType type){
+    if(type == TokenType::Bool)
+        return TypeOfData::Bool;
     if (type == TokenType::Int)
         return TypeOfData::Integer;
     if (type == TokenType::Float)
@@ -439,8 +449,7 @@ TypeOfData Parser::getTypeOfData(TokenType type){
         return TypeOfData::Message;
     if (type == TokenType::Date)
         return TypeOfData::Date;
-    else
-        return TypeOfData::TimeDiff;
+    return TypeOfData::TimeDiff;
 }
 std::string Parser::getOperatorType(){
     if(currentToken.type == TokenType::Plus)
