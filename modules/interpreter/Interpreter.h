@@ -19,72 +19,72 @@ private:
     std::unordered_map<std::string, Function> functions;
 public:
     std::string debug;
-    void visit(Declaration &element,int indentation) override{
-        element.assignable.operator*().accept(*this,indentation);
+    void visit(Declaration &element) override{
+        element.assignable.operator*().accept(*this);
     };
-    void visit(VariableDeclr &element,int indentation) override
+    void visit(VariableDeclr &element) override
     {
         // TODO
     };
-    void visit(Program &element,int indentation) override
+    void visit(Program &element) override
     {
         debug += "Entering interpreter\n";
         for(auto &declaration : element.declarations){
             if(declaration != nullptr)
-                visit(declaration.operator*(),indentation);
+                visit(declaration.operator*());
         }
         debug += "----------------------------------------\n";
         for(auto &function : element.functions){
             if(function != nullptr)
-                visit(function.operator*(),indentation);
+                visit(function.operator*());
         }
     };
-    void visit(AdvExpression &element,int indentation) override{
+    void visit(AdvExpression &element) override{
         // TODO
     };
-    void visit(Expression &element,int indentation) override{
+    void visit(Expression &element) override{
         // TODO
     };
-    void visit(ParenthesisExpression &element,int indentation) override{
+    void visit(ParenthesisExpression &element) override{
     };
-    void visit(BasicExpression &element ,int indentation) override{
+    void visit(BasicExpression &element) override{
         // TODO
     };
-    void visit(Variable &element,int indentation) override{
+    void visit(Variable &element) override{
     };
-    void visit(VariableAccess &element,int indentation) override{
+    void visit(VariableAccess &element) override{
     };
-    void visit(FunCall &element,int indentation) override{
+    void visit(FunCall &element) override{
     };
-    void visit(Function &element,int indentation) override{
+    void visit(Function &element) override{
     };
-    void visit(Body &element,int indentation) override{
+    void visit(Body &element) override{
     };
-    void visit(AssignStatement &element,int indentation) override{
+    void visit(AssignStatement &element) override{
     }
-    void visit(Int &element,int indentation) override{
+    void visit(Int &element) override{
     };
-    void visit(Double &element,int indentation) override{
+    void visit(Double &element) override{
     };
-    void visit(Bool &element,int indentation) override{
+    void visit(Bool &element) override{
     };
-    void visit(String &element,int indentation) override{
+    void visit(String &element) override{
     };
-    void visit(Date &element,int indentation) override{
+    void visit(Date &element) override{
     };
-    void visit(TimeDiff &element,int indentation) override{
+    void visit(TimeDiff &element) override{
     };
-    void visit(Return &element,int indentation) override{
+    void visit(Return &element) override{
     }
-    void visit(While &element,int indentation) override{
+    void visit(While &element) override{
     };
-    void visit(If &element,int indentation) override{
+    void visit(If &element) override{
     };
-    void visit(Else &element,int indentation) override{
+    void visit(Else &element) override{
     };
-    void visit(Condition &element,int indentation) override{
+    void visit(Condition &element) override{
     }
-    void visit(RelationalCondition &element,int indentation) override{
+    void visit(RelationalCondition &element) override{
     }
 };
 

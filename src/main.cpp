@@ -19,7 +19,7 @@ int main()
     std::unique_ptr<Program> program = parser.TryToParseProgram();
     if(program){
         PrintVisitor printVisitor = PrintVisitor();
-        program->accept(printVisitor,0);
+        program->accept(printVisitor);
         std::cout<< printVisitor.debug;
     }
 
