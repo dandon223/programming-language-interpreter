@@ -1,2 +1,2 @@
-fun bool a(bool b):
-	int b
+int a = 10
+int b
