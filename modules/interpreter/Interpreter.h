@@ -13,12 +13,13 @@
 
 class Interpreter : public Visitor{
 private:
-    std::unique_ptr<INode> result;
+    std::variant<std::monostate,int> result;
     int times_minus = 0;
     //int times_negation = 0;
-    std::unordered_map<std::string, std::unique_ptr<INode>> global_scope;
+    std::unordered_map<std::string, std::variant<std::monostate,int>> global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, Function> functions;
+    bool properType(TypeOfData type ,std::variant<std::monostate,int> value);
 public:
     std::string debug = "";
     void visit(Declaration &element) override{
@@ -28,7 +29,12 @@ public:
     };
     void visit(VariableDeclr &element) override
     {
-        global_scope.insert({element.id,std::move(result)});
+        if(properType(element.typeOfData,result)){
+            global_scope.insert({element.id,result});
+            result = std::monostate{};
+        }else
+            ErrorHandler::printInterpreterError("wrong type in variable declaration");
+
     };
     void visit(Program &element) override
     {
@@ -78,7 +84,7 @@ public:
     void visit(Int &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
         //std::cout << is_minus;
-        result = std::make_unique<Int>(Int(element.value * is_minus));
+        result = element.value * is_minus;
     };
     void visit(Double &element) override{
     };

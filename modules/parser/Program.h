@@ -105,6 +105,7 @@ public:
     {
         visitor.visit(*this);
     };
+
 };
 class Bool : public INode
 {
