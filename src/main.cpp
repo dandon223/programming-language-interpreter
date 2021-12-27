@@ -4,6 +4,7 @@
 #include "../modules/lexer/Lexer.h"
 #include "../modules/parser/Parser.h"
 #include "../modules/token/Token.h"
+#include "../modules/interpreter/Interpreter.h"
 
 //int main(int argc, char *argv[])
 int main()
@@ -21,6 +22,10 @@ int main()
         PrintVisitor printVisitor = PrintVisitor();
         program->accept(printVisitor);
         std::cout<< printVisitor.debug;
+
+        Interpreter interpreter = Interpreter();
+        program->accept(interpreter);
+        std::cout<<interpreter.debug;
     }
 
     return 1;

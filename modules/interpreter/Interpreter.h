@@ -13,18 +13,22 @@
 
 class Interpreter : public Visitor{
 private:
-    INode result;
-    std::unordered_map<std::string, INode> global_scope;
+    std::unique_ptr<INode> result;
+    int times_minus = 0;
+    //int times_negation = 0;
+    std::unordered_map<std::string, std::unique_ptr<INode>> global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, Function> functions;
 public:
-    std::string debug;
+    std::string debug = "";
     void visit(Declaration &element) override{
-        element.assignable.operator*().accept(*this);
+        if(element.assignable != nullptr)
+            element.assignable.operator*().accept(*this);
+        element.var.accept(*this);
     };
     void visit(VariableDeclr &element) override
     {
-        // TODO
+        global_scope.insert({element.id,std::move(result)});
     };
     void visit(Program &element) override
     {
@@ -48,7 +52,16 @@ public:
     void visit(ParenthesisExpression &element) override{
     };
     void visit(BasicExpression &element) override{
-        // TODO
+        if(element.wasNegation)
+            ErrorHandler::printInterpreterError("Negation used in basicExpression");
+        if(element.wasMinus)
+            times_minus = times_minus -1;
+
+        if(element.basic != nullptr)
+            element.basic->accept(*this);
+
+        if(element.wasMinus)
+            times_minus = times_minus +1;
     };
     void visit(Variable &element) override{
     };
@@ -63,6 +76,9 @@ public:
     void visit(AssignStatement &element) override{
     }
     void visit(Int &element) override{
+        int is_minus = times_minus % 2 ==0 ? 1 : -1;
+        //std::cout << is_minus;
+        result = std::make_unique<Int>(Int(element.value * is_minus));
     };
     void visit(Double &element) override{
     };
