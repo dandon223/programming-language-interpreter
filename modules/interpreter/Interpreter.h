@@ -9,32 +9,38 @@
 #include "FunctionCallContext.h"
 
 
-
-
 class Interpreter : public Visitor{
 private:
-    std::variant<std::monostate,int> result;
+    std::vector<variantTypes> results;
     int times_minus = 0;
     //int times_negation = 0;
-    std::unordered_map<std::string, std::variant<std::monostate,int>> global_scope;
+    Scope global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, Function> functions;
-    bool properType(TypeOfData type ,std::variant<std::monostate,int> value);
+    bool properType(TypeOfData type ,variantTypes value);
 public:
     std::string debug = "";
     void visit(Declaration &element) override{
         if(element.assignable != nullptr)
             element.assignable.operator*().accept(*this);
+        else
+            results.emplace_back(std::monostate{});
         element.var.accept(*this);
     };
     void visit(VariableDeclr &element) override
     {
-        if(properType(element.typeOfData,result)){
-            global_scope.insert({element.id,result});
-            result = std::monostate{};
+        if(properType(element.typeOfData,results.back())){
+
+            if(!functions_scopes.empty() && !functions_scopes.back().existsInLastScope(element.id))
+                functions_scopes.back().addToScope(element.id,element.typeOfData,results.back());
+            else if(!global_scope.exists(element.id))
+                global_scope.addToScope(element.id,element.typeOfData,results.back());
+            else
+                ErrorHandler::printInterpreterError("variable already declared");
+
+            results.pop_back();
         }else
             ErrorHandler::printInterpreterError("wrong type in variable declaration");
-
     };
     void visit(Program &element) override
     {
@@ -84,17 +90,36 @@ public:
     void visit(Int &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
         //std::cout << is_minus;
-        result = element.value * is_minus;
+        results.emplace_back(element.value * is_minus);
     };
     void visit(Double &element) override{
+        int is_minus = times_minus % 2 ==0 ? 1 : -1;
+        //std::cout << is_minus;
+        results.emplace_back(element.value * is_minus);
     };
     void visit(Bool &element) override{
+        int is_minus = times_minus % 2 ==0 ? 1 : -1;
+        if(is_minus == -1)
+            ErrorHandler::printInterpreterError("Bool can not have minus sign");
+        results.emplace_back(element.value);
     };
     void visit(String &element) override{
+        int is_minus = times_minus % 2 ==0 ? 1 : -1;
+        if(is_minus == -1)
+            ErrorHandler::printInterpreterError("String can not have minus sign");
+        results.emplace_back(element.value);
     };
     void visit(Date &element) override{
+        int is_minus = times_minus % 2 ==0 ? 1 : -1;
+        if(is_minus == -1)
+            ErrorHandler::printInterpreterError("Date can not have minus sign");
+        results.emplace_back(element);
     };
     void visit(TimeDiff &element) override{
+        int is_minus = times_minus % 2 ==0 ? 1 : -1;
+        if(is_minus == -1)
+            ErrorHandler::printInterpreterError("TimeDiff can not have minus sign");
+        results.emplace_back(element);
     };
     void visit(Return &element) override{
     }
