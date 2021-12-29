@@ -16,7 +16,7 @@ private:
     //int times_negation = 0;
     Scope global_scope;
     std::vector<FunctionCallContext> functions_scopes;
-    std::unordered_map<std::string, Function> functions;
+    std::unordered_map<std::string, std::unique_ptr<Function>> functions;
     bool properType(TypeOfData type ,variantTypes value);
 public:
     std::string debug = "";
@@ -51,9 +51,18 @@ public:
         }
         debug += "----------------------------------------\n";
         for(auto &function : element.functions){
-            if(function != nullptr)
-                visit(function.operator*());
+            if(function != nullptr){
+                if(functions.find(function->name) == functions.end())
+                    functions.insert({function->name,std::move(function)});
+                else
+                    ErrorHandler::printInterpreterError("function already defined");
+            }
         }
+        auto main = functions.find("main");
+        if(main != functions.end())
+            main->second->accept(*this);
+        else
+            ErrorHandler::printInterpreterError("did not find main function");
     };
     void visit(AdvExpression &element) override{
         // TODO
@@ -82,6 +91,7 @@ public:
     void visit(FunCall &element) override{
     };
     void visit(Function &element) override{
+        debug += "Found function" + element.name+"\n";
     };
     void visit(Body &element) override{
     };

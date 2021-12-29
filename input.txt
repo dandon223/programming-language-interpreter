@@ -4,3 +4,5 @@ bool c = True
 string d = "d"
 date e = [1999:01:01]
 timeDiff f = {1y1m0d}
+fun int main():
+	return 1
