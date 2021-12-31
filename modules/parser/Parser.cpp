@@ -299,6 +299,8 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
     }
     if(currentToken.type == TokenType::Number)
     {
+        if(wasNegation)
+            ErrorHandler::printParserError(currentToken,"can not negate number");
         if(currentToken.value.index()==0)
             basic = std::make_unique<Int>(std::get<int>(currentToken.value));//std::get<int>(currentToken.value);
         else
@@ -307,6 +309,10 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::True || currentToken.type == TokenType::False){
+        if(wasNegation)
+            ErrorHandler::printParserError(currentToken,"can not negate bool");
+        if(wasMinus)
+            ErrorHandler::printParserError(currentToken,"can not minus bool");
         if(currentToken.type == TokenType::True)
             basic = std::make_unique<Bool>(Bool(true));
         else
@@ -315,16 +321,28 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::StringValue){
+        if(wasNegation)
+            ErrorHandler::printParserError(currentToken,"can not negate string");
+        if(wasMinus)
+            ErrorHandler::printParserError(currentToken,"can not minus string");
         basic = std::make_unique<String>(std::get<std::string>(currentToken.value));
         getNextToken();
         return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::DateValue){
+        if(wasNegation)
+            ErrorHandler::printParserError(currentToken,"can not negate date");
+        if(wasMinus)
+            ErrorHandler::printParserError(currentToken,"can not minus date");
         basic = std::make_unique<Date>(std::get<Date>(currentToken.value));
         getNextToken();
         return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::TimeDiffValue){
+        if(wasNegation)
+            ErrorHandler::printParserError(currentToken,"can not negate timeDiff");
+        if(wasMinus)
+            ErrorHandler::printParserError(currentToken,"can not minus timeDiff");
         basic =std::make_unique<TimeDiff>(std::get<TimeDiff>(currentToken.value));
         getNextToken();
         return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));

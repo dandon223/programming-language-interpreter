@@ -76,8 +76,8 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         auto program_test = std::make_unique<Program>(Program(std::move(declarations),std::move(functions)));
         PrintVisitor printVisitor = PrintVisitor();
         PrintVisitor printVisitor1 =PrintVisitor();
-        program_test->accept(printVisitor,0);
-        program->accept(printVisitor1,0);
+        program_test->accept(printVisitor);
+        program->accept(printVisitor1);
         BOOST_CHECK(printVisitor.debug == printVisitor1.debug);
     }
     BOOST_AUTO_TEST_CASE( function_basic_return )
@@ -105,8 +105,8 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         auto program_test = std::make_unique<Program>(Program(std::move(declarations),std::move(functions)));
         PrintVisitor printVisitor = PrintVisitor();
         PrintVisitor printVisitor1 =PrintVisitor();
-        program_test->accept(printVisitor,0);
-        program->accept(printVisitor1,0);
+        program_test->accept(printVisitor);
+        program->accept(printVisitor1);
         BOOST_CHECK(printVisitor.debug == printVisitor1.debug);
     }
     BOOST_AUTO_TEST_CASE( hard_function )
@@ -180,8 +180,8 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         auto program_test = std::make_unique<Program>(Program(std::move(declarations),std::move(functions)));
         PrintVisitor printVisitor = PrintVisitor();
         PrintVisitor printVisitor1 =PrintVisitor();
-        program_test->accept(printVisitor,0);
-        program->accept(printVisitor1,0);
+        program_test->accept(printVisitor);
+        program->accept(printVisitor1);
         BOOST_CHECK(printVisitor.debug == printVisitor1.debug);
     }
     BOOST_AUTO_TEST_CASE( parsing_arguments_empty )
@@ -267,7 +267,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         Parser parser = Parser(lexer);
         auto par_con = parser.TryToParseBasicCondition();
         PrintVisitor printVisitor = PrintVisitor();
-        par_con->accept(printVisitor,0);
+        par_con->accept(printVisitor);
         std::string real = "Entered ParenthesisExpression[]\n"
                            "  Entered Expression[]\n"
                            "    Entered BasicExpression [Type = Int, Value = 1]\n"
@@ -284,7 +284,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         Parser parser = Parser(lexer);
         auto par_con = parser.TryToParseCondition();
         PrintVisitor printVisitor = PrintVisitor();
-        par_con->accept(printVisitor,0);
+        par_con->accept(printVisitor);
         std::string real = "Entered RelationalCondition []\n"
                            "  Entered ParenthesisExpression[ Negation]\n"
                            "    Entered RelationalCondition []\n"
@@ -304,7 +304,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         Parser parser = Parser(lexer);
         auto par_con = parser.TryToParseExpression();
         PrintVisitor printVisitor = PrintVisitor();
-        par_con->accept(printVisitor,0);
+        par_con->accept(printVisitor);
         std::string real ="Entered Expression[]\n"
                           "  Entered BasicExpression [Type = Int, Value = 1]\n"
                           "Operator: +\n"
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         Parser parser = Parser(lexer);
         auto par_con = parser.TryToParseExpression();
         PrintVisitor printVisitor = PrintVisitor();
-        par_con->accept(printVisitor,0);
+        par_con->accept(printVisitor);
         std::string real ="Entered ParenthesisExpression[, Minus]\n"
                           "  Entered Expression[]\n"
                           "    Entered BasicExpression [Type = Int, Value = 1]\n"
@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
                           "    Entered BasicExpression [Type = VariableAccess, Value = b]\n"
                           "  ,Body [\n"
                           "    Entered Return\n";
-        par_con->accept(printVisitor,0);
+        par_con->accept(printVisitor);
         BOOST_CHECK(printVisitor.debug == real);
     }
 

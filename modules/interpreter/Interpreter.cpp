@@ -8,6 +8,8 @@ bool Interpreter::properType(TypeOfData type,variantTypes value){
         return true;
     if(type == TypeOfData::Double && value.index()==2)
         return true;
+    if(type == TypeOfData::Double && value.index()==1)
+        return true;
     if(type == TypeOfData::Bool && value.index()==3)
         return true;
     if(type == TypeOfData::Message && value.index()==4)
@@ -30,6 +32,50 @@ void Interpreter::TryToMultiply() {
             [&](int &left, double&right ) { results.back() = double(left) * right; },
             [&](double &left, int&right ) { results.back() = left * double(right); },
             [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot multiply those 2 arguments"); },
+    }, left_result, right_result);
+}
+void Interpreter::TryToDivide() {
+    auto right_result = results.back();
+    results.pop_back();
+    auto left_result = results.back();
+
+    if(right_result.index()==1 && std::get<int>(right_result)==0)
+        ErrorHandler::printInterpreterError("can not divide by 0");
+    else if(right_result.index()==2 && std::get<double>(right_result)== 0)
+        ErrorHandler::printInterpreterError("can not divide by 0");
+
+    std::visit(overload{
+            [&](int&left, int &right) { results.back() = left / right; },
+            [&](double &left, double&right ) { results.back() = left / right; },
+            [&](int &left, double&right ) { results.back() = double(left) / right; },
+            [&](double &left, int&right ) { results.back() = left / double(right); },
+            [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot divide those 2 arguments"); },
+    }, left_result, right_result);
+}
+void Interpreter::TryToAdd() {
+    auto right_result = results.back();
+    results.pop_back();
+    auto left_result = results.back();
+
+    std::visit(overload{
+            [&](int&left, int &right) { results.back() = left + right; },
+            [&](double &left, double&right ) { results.back() = left + right; },
+            [&](int &left, double&right ) { results.back() = double(left) + right; },
+            [&](double &left, int&right ) { results.back() = left + double(right); },
+            [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot add those 2 arguments"); },
+    }, left_result, right_result);
+}
+void Interpreter::TryToSubstract() {
+    auto right_result = results.back();
+    results.pop_back();
+    auto left_result = results.back();
+
+    std::visit(overload{
+            [&](int&left, int &right) { results.back() = left - right; },
+            [&](double &left, double&right ) { results.back() = left - right; },
+            [&](int &left, double&right ) { results.back() = double(left) - right; },
+            [&](double &left, int&right ) { results.back() = left - double(right); },
+            [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot substract those 2 arguments"); },
     }, left_result, right_result);
 }
 

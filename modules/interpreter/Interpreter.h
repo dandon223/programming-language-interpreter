@@ -19,6 +19,9 @@ private:
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, std::unique_ptr<Function>> functions;
     void TryToMultiply();
+    void TryToDivide();
+    void TryToAdd();
+    void TryToSubstract();
     bool properType(TypeOfData type ,variantTypes value);
 public:
     std::string debug = "";
@@ -71,19 +74,29 @@ public:
         element.right.operator*().accept(*this);
         if(element.operationType == "*")
             TryToMultiply();
-        //else
-            //TryToDivide();
-        //auto right_result = results.end();
-        //results.pop_back();
+        else
+            TryToDivide();
     };
     void visit(Expression &element) override{
-        // TODO
+        element.left.operator*().accept(*this);
+        element.right.operator*().accept(*this);
+        if(element.operationType == "+")
+            TryToAdd();
+        else
+            TryToSubstract();
     };
     void visit(ParenthesisExpression &element) override{
+        if(element.wasMinus)
+            times_minus = times_minus -1;
+
+        element.child.operator*().accept(*this);
+
+        if(element.wasMinus)
+            times_minus = times_minus +1;
     };
     void visit(BasicExpression &element) override{
-        if(element.wasNegation)
-            ErrorHandler::printInterpreterError("Negation used in basicExpression");
+//        if(element.wasNegation)
+//            ErrorHandler::printInterpreterError("Negation used in basicExpression");
         if(element.wasMinus)
             times_minus = times_minus -1;
 
@@ -108,12 +121,10 @@ public:
     }
     void visit(Int &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
-        //std::cout << is_minus;
         results.emplace_back(element.value * is_minus);
     };
     void visit(Double &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
-        //std::cout << is_minus;
         results.emplace_back(element.value * is_minus);
     };
     void visit(Bool &element) override{

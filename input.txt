@@ -1,4 +1,5 @@
-float a = -10.1 *2.0
+//date a = [1999:09:02]
 
 fun int main():
-	return 1
+	if a > !0:
+		return
