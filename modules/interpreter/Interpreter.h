@@ -7,6 +7,7 @@
 #include "../parser/Parser.h"
 #include "../parser/Program.h"
 #include "FunctionCallContext.h"
+#include <variant>
 
 
 class Interpreter : public Visitor{
@@ -17,6 +18,7 @@ private:
     Scope global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, std::unique_ptr<Function>> functions;
+    void TryToMultiply();
     bool properType(TypeOfData type ,variantTypes value);
 public:
     std::string debug = "";
@@ -65,7 +67,14 @@ public:
             ErrorHandler::printInterpreterError("did not find main function");
     };
     void visit(AdvExpression &element) override{
-        // TODO
+        element.left.operator*().accept(*this);
+        element.right.operator*().accept(*this);
+        if(element.operationType == "*")
+            TryToMultiply();
+        //else
+            //TryToDivide();
+        //auto right_result = results.end();
+        //results.pop_back();
     };
     void visit(Expression &element) override{
         // TODO

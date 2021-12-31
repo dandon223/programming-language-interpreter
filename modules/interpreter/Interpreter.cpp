@@ -1,7 +1,6 @@
 
 
 #include "Interpreter.h"
-
 bool Interpreter::properType(TypeOfData type,variantTypes value){
     if(value.index() == 0)
         return true;
@@ -19,3 +18,19 @@ bool Interpreter::properType(TypeOfData type,variantTypes value){
         return true;
     return false;
 }
+template<class... Ts> struct overload : Ts... { using Ts::operator()...; };
+template<class... Ts> overload(Ts...) -> overload<Ts...>;
+void Interpreter::TryToMultiply() {
+    auto right_result = results.back();
+    results.pop_back();
+    auto left_result = results.back();
+    std::visit(overload{
+            [&](int&left, int &right) { results.back() = left * right; },
+            [&](double &left, double&right ) { results.back() = left * right; },
+            [&](int &left, double&right ) { results.back() = double(left) * right; },
+            [&](double &left, int&right ) { results.back() = left * double(right); },
+            [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot multiply those 2 arguments"); },
+    }, left_result, right_result);
+}
+
+

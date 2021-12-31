@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.17)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+#add_compile_options(-fconcepts -O2)
 file(GLOB TARGET_SRC "./src/*.cpp" "./modules/*/*.cpp" )
 project(tkom_21z_daniel)
 include_directories(
