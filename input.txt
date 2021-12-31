@@ -1,5 +1,3 @@
-//date a = [1999:09:02]
-
+int a = 1
 fun int main():
-	if a > !0:
-		return
+	return

@@ -14,7 +14,7 @@ class Interpreter : public Visitor{
 private:
     std::vector<variantTypes> results;
     int times_minus = 0;
-    //int times_negation = 0;
+    int times_negation = 0;
     Scope global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, std::unique_ptr<Function>> functions;
@@ -88,21 +88,29 @@ public:
     void visit(ParenthesisExpression &element) override{
         if(element.wasMinus)
             times_minus = times_minus -1;
+        if(element.wasNegation)
+            times_negation = times_negation - 1;
 
         element.child.operator*().accept(*this);
+        if(element.wasNegation && results.back().index() !=3)
+            ErrorHandler::printInterpreterError("negation not for bool type");
 
         if(element.wasMinus)
             times_minus = times_minus +1;
+        if(element.wasNegation)
+            times_negation = times_negation +1;
     };
     void visit(BasicExpression &element) override{
-//        if(element.wasNegation)
-//            ErrorHandler::printInterpreterError("Negation used in basicExpression");
+        if(element.wasNegation)
+            times_negation = times_negation -1;
         if(element.wasMinus)
             times_minus = times_minus -1;
 
         if(element.basic != nullptr)
             element.basic->accept(*this);
 
+        if(element.wasNegation)
+            times_negation = times_negation +1;
         if(element.wasMinus)
             times_minus = times_minus +1;
     };
@@ -131,7 +139,11 @@ public:
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
         if(is_minus == -1)
             ErrorHandler::printInterpreterError("Bool can not have minus sign");
-        results.emplace_back(element.value);
+        int is_negation = times_negation % 2 ==0 ? 1:-1;
+        if(is_negation == -1)
+            results.emplace_back(!element.value);
+        else
+            results.emplace_back(element.value);
     };
     void visit(String &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;

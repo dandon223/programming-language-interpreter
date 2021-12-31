@@ -309,8 +309,6 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         return std::make_unique<BasicExpression>(BasicExpression(std::move(basic), wasMinus,wasNegation));
     }
     else if (currentToken.type == TokenType::True || currentToken.type == TokenType::False){
-        if(wasNegation)
-            ErrorHandler::printParserError(currentToken,"can not negate bool");
         if(wasMinus)
             ErrorHandler::printParserError(currentToken,"can not minus bool");
         if(currentToken.type == TokenType::True)
