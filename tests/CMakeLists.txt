@@ -17,7 +17,7 @@ if(Boost_FOUND)
 
 endif()
 
-add_executable(tests LexerTests.cpp ParserTests.cpp )
+add_executable(tests LexerTests.cpp ParserTests.cpp InterpreterTests.cpp )
 
 if(Boost_FOUND)
 

@@ -11,7 +11,7 @@
 
 
 class Interpreter : public Visitor{
-private:
+public:
     std::vector<variantTypes> results;
     int times_minus = 0;
     int times_negation = 0;
@@ -23,7 +23,7 @@ private:
     void TryToAdd();
     void TryToSubstract();
     bool properType(TypeOfData type ,variantTypes value);
-public:
+//public:
     std::string debug = "";
     void visit(Declaration &element) override{
         if(element.assignable != nullptr)
