@@ -143,7 +143,6 @@ public:
         for(const auto& statement : element.statements){
             statement->accept(*this);
             if(!to_continue){
-                to_continue = true;
                 break;
             }
         }
@@ -204,6 +203,11 @@ public:
     };
     void visit(If &element) override{
         element.condition.operator*().accept(*this);
+        if(std::get<bool>(results.back())){
+            results.pop_back();
+            element.body.operator*().accept(*this);
+        }else
+            results.pop_back();
     };
     void visit(Else &element) override{
     };
@@ -211,7 +215,6 @@ public:
 
     }
     void visit(RelationalCondition &element) override{
-        std::cout<<"\nCONDITION\n";
         element.left.operator*().accept(*this);
         element.right.operator*().accept(*this);
         TryToCompareValues(element.operationType);

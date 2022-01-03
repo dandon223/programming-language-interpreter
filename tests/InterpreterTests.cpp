@@ -11,7 +11,7 @@ BOOST_AUTO_TEST_SUITE(Interpreter_basic_tests)
         {
                 std::string text = "int a = 1\n"
                                    "fun int main():\n"
-                                   "\treturn";
+                                   "\treturn 1";
             std::istringstream handle(text);
             Lexer lexer = Lexer(handle);
             Parser parser = Parser(lexer);
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(Interpreter_basic_tests)
     {
         std::string text = "int a = -1+1\n"
                            "fun int main():\n"
-                           "\treturn";
+                           "\treturn 1";
         std::istringstream handle(text);
         Lexer lexer = Lexer(handle);
         Parser parser = Parser(lexer);
@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_SUITE(Interpreter_basic_tests)
     {
         std::string text = "int a = -(1+1)\n"
                            "fun int main():\n"
-                           "\treturn";
+                           "\treturn 1";
         std::istringstream handle(text);
         Lexer lexer = Lexer(handle);
         Parser parser = Parser(lexer);
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_SUITE(Interpreter_basic_tests)
     {
         std::string text = "int a = -2*1\n"
                            "fun int main():\n"
-                           "\treturn";
+                           "\treturn 1";
         std::istringstream handle(text);
         Lexer lexer = Lexer(handle);
         Parser parser = Parser(lexer);
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_SUITE(Interpreter_basic_tests)
     {
         std::string text = "int a = -(1+2)*3+1\n"
                            "fun int main():\n"
-                           "\treturn";
+                           "\treturn 1";
         std::istringstream handle(text);
         Lexer lexer = Lexer(handle);
         Parser parser = Parser(lexer);
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_SUITE(Interpreter_basic_tests)
     {
         std::string text = "bool a = False +1\n"
                            "fun int main():\n"
-                           "\treturn";
+                           "\treturn 1";
         std::istringstream handle(text);
         Lexer lexer = Lexer(handle);
         Parser parser = Parser(lexer);
