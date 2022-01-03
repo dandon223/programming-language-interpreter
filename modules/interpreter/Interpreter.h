@@ -15,6 +15,7 @@ public:
     std::vector<variantTypes> results;
     int times_minus = 0;
     int times_negation = 0;
+    bool to_continue = true;
     Scope global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, std::unique_ptr<Function>> functions;
@@ -63,6 +64,8 @@ public:
                     ErrorHandler::printInterpreterError("function already defined");
             }
         }
+        functions_scopes.emplace_back(FunctionCallContext());
+        functions_scopes.back().addScope();
         auto main = functions.find("main");
         if(main != functions.end())
             main->second->accept(*this);
@@ -117,15 +120,44 @@ public:
     void visit(Variable &element) override{
     };
     void visit(VariableAccess &element) override{
+        if(functions_scopes.back().existsInScope(element.id))
+            results.emplace_back(functions_scopes.back().getValue(element.id));
+        else
+            ErrorHandler::printInterpreterError("no variable in scope "+element.id);
     };
     void visit(FunCall &element) override{
     };
     void visit(Function &element) override{
-        debug += "Found function" + element.name+"\n";
+
+        for(long long unsigned int i =0 ; i < element.parameters.size();i++){
+            results.emplace_back(std::monostate{});
+            element.parameters[i].accept(*this);
+        }
+        element.body.operator*().accept(*this);
+        if(!properType(element.dataType,results.back()))
+            ErrorHandler::printInterpreterError("wrong return type in function "+element.name);
+
     };
     void visit(Body &element) override{
+        for(const auto& statement : element.statements){
+            statement->accept(*this);
+            if(!to_continue){
+                to_continue = true;
+                break;
+            }
+        }
     };
     void visit(AssignStatement &element) override{
+        element.assignable.operator*().accept(*this);
+
+        if(functions_scopes.back().existsInScope(element.var->id)){
+            functions_scopes.back().changeInScope(element.var->id,results.back());
+            results.pop_back();
+        }
+        else
+            ErrorHandler::printInterpreterError("no variable in scope "+element.var->id);
+
+        //element.var->id;
     }
     void visit(Int &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
@@ -164,6 +196,10 @@ public:
         results.emplace_back(element);
     };
     void visit(Return &element) override{
+        if(element.expression != nullptr)
+            element.expression.operator*().accept(*this);
+
+        to_continue = false;
     }
     void visit(While &element) override{
     };

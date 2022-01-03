@@ -1,3 +1,5 @@
-bool a = !(False +1)
+//int a = 10
 fun int main():
-	return
+	int a = 10
+	a = a +1
+	return a

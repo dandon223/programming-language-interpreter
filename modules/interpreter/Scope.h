@@ -32,5 +32,12 @@ public:
             return false;
         return true;
     }
+    bool changeValue(std::string name, variantTypes value){
+        auto search = values.find(name);
+        if(search == values.end())
+            return false;
+        search->second = value;
+        return true;
+    }
 };
 #endif //TKOM_21Z_DANIEL_SCOPE_H
