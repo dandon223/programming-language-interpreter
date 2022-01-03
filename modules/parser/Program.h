@@ -144,6 +144,12 @@ private:
     int day = 1;
 public:
     Date(int y, int m, int d) :year(y),month(m),day(d){}
+    bool operator ==( const Date & v){
+        return (this->year == v.year && this->month == v.month && this->day == v.day);
+    };
+    bool operator !=( const Date & v){
+        return (this->year != v.year || this->month != v.month || this->day != v.day);
+    };
     std::string toString() {
         std::string year_date = std::to_string(year);
         std::string month_date = std::to_string(month);
@@ -181,8 +187,19 @@ public:
     void accept(Visitor &v) override {
         v.visit(*this);
     }
+    TimeDiff operator +( const TimeDiff & v )
+    {
+        return TimeDiff( this->year + v.year, this->month + v.month, this->day + v.day );
+    }
+    bool operator ==( const TimeDiff & v){
+        return (this->year == v.year && this->month == v.month && this->day == v.day);
+    };
+    bool operator !=( const TimeDiff & v){
+        return (this->year != v.year || this->month != v.month || this->day != v.day);
+    };
 
 };
+
 class VariableAccess : public INode
 {
 public:

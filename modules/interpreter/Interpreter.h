@@ -24,6 +24,7 @@ public:
     void TryToAdd();
     void TryToSubstract();
     bool properType(TypeOfData type ,variantTypes value);
+    void TryToCompareValues(std::string);
 //public:
     std::string debug = "";
     void visit(Declaration &element) override{
@@ -156,8 +157,6 @@ public:
         }
         else
             ErrorHandler::printInterpreterError("no variable in scope "+element.var->id);
-
-        //element.var->id;
     }
     void visit(Int &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
@@ -204,12 +203,18 @@ public:
     void visit(While &element) override{
     };
     void visit(If &element) override{
+        element.condition.operator*().accept(*this);
     };
     void visit(Else &element) override{
     };
     void visit(Condition &element) override{
+
     }
     void visit(RelationalCondition &element) override{
+        std::cout<<"\nCONDITION\n";
+        element.left.operator*().accept(*this);
+        element.right.operator*().accept(*this);
+        TryToCompareValues(element.operationType);
     }
 };
 
