@@ -130,5 +130,27 @@ void Interpreter::TryToCompareValues(std::string type){
                 [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot ''!='' those 2 arguments"); },
         }, left_result, right_result);
     }
+    else if(type == ">="){
+        std::visit(overload{
+                [&](int&left, int &right) { results.back() = left >= right; },
+                [&](double &left, double&right ) { results.back() = left >= right; },
+                [&](int &left, double&right ) { results.back() = double(left) >= right; },
+                [&](double &left, int&right ) { results.back() = left >= double(right); },
+                [&](TimeDiff &left, TimeDiff &right ) { results.back() = left.operator>=(right); },
+                [&](Date &left, Date &right ) { results.back() = left.operator>=(right); },
+                [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot ''!='' those 2 arguments"); },
+        }, left_result, right_result);
+    }
+    else if(type == ">"){
+        std::visit(overload{
+                [&](int&left, int &right) { results.back() = left > right; },
+                [&](double &left, double&right ) { results.back() = left > right; },
+                [&](int &left, double&right ) { results.back() = double(left) > right; },
+                [&](double &left, int&right ) { results.back() = left > double(right); },
+                [&](TimeDiff &left, TimeDiff &right ) { results.back() = left.operator>(right); },
+                [&](Date &left, Date &right ) { results.back() = left.operator>(right); },
+                [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot ''!='' those 2 arguments"); },
+        }, left_result, right_result);
+    }
 }
 

@@ -166,6 +166,15 @@ public:
     bool operator <( const TimeDiff & v){
         return this->year < v.year || (this->year==v.year && this->month<v.month) || (this->year == v.year && this->month == v.month && this->day < v.day);
     };
+    bool operator >=( const TimeDiff & v){
+        bool same =  (this->year == v.year && this->month == v.month && this->day == v.day);
+        if(same)
+            return true;
+        return this->year > v.year || (this->year==v.year && this->month>v.month) || (this->year == v.year && this->month == v.month && this->day > v.day);
+    };
+    bool operator >( const TimeDiff & v){
+        return this->year > v.year || (this->year==v.year && this->month>v.month) || (this->year == v.year && this->month == v.month && this->day > v.day);
+    };
 
 };
 class Date : public INode{
@@ -189,6 +198,15 @@ public:
     };
     bool operator <( const Date & v){
         return this->year < v.year || (this->year==v.year && this->month<v.month) || (this->year == v.year && this->month == v.month && this->day < v.day);
+    };
+    bool operator >=( const Date & v){
+        bool same =  (this->year == v.year && this->month == v.month && this->day == v.day);
+        if(same)
+            return true;
+        return this->year > v.year || (this->year==v.year && this->month>v.month) || (this->year == v.year && this->month == v.month && this->day > v.day);
+    };
+    bool operator >( const Date & v){
+        return this->year > v.year || (this->year==v.year && this->month>v.month) || (this->year == v.year && this->month == v.month && this->day > v.day);
     };
     TimeDiff operator -( const Date & v){
         int day2 = v.day;
