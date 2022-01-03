@@ -1,5 +1,5 @@
 //int a = 10
 fun int main():
-	if {9y1m1d}=={9y1m1d}:
-		return 1
+	date a = [2001:01:01]
+	timeDiff b = a - [2002:01:01]
 	return 1

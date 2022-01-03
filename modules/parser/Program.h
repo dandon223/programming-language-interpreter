@@ -137,6 +137,37 @@ public:
         visitor.visit(*this);
     };
 };
+class TimeDiff : public INode{
+private:
+    int year=0;
+    int month=0;
+    int day =0;
+public:
+    TimeDiff(int y, int m, int d) :year(y),month(m),day(d){}
+
+    std::string toString() {
+        return std::to_string(year)+"y"+std::to_string(month)+"m"+std::to_string(day)+"d";
+    }
+    void accept(Visitor &v) override {
+        v.visit(*this);
+    }
+    bool operator ==( const TimeDiff & v){
+        return (this->year == v.year && this->month == v.month && this->day == v.day);
+    };
+    bool operator !=( const TimeDiff & v){
+        return (this->year != v.year || this->month != v.month || this->day != v.day);
+    };
+    bool operator <=( const TimeDiff & v){
+        bool same =  (this->year == v.year && this->month == v.month && this->day == v.day);
+        if(same)
+            return true;
+        return this->year < v.year || (this->year==v.year && this->month<v.month) || (this->year == v.year && this->month == v.month && this->day < v.day);
+    };
+    bool operator <( const TimeDiff & v){
+        return this->year < v.year || (this->year==v.year && this->month<v.month) || (this->year == v.year && this->month == v.month && this->day < v.day);
+    };
+
+};
 class Date : public INode{
 private:
     int year = 1970;
@@ -149,6 +180,49 @@ public:
     };
     bool operator !=( const Date & v){
         return (this->year != v.year || this->month != v.month || this->day != v.day);
+    };
+    bool operator <=( const Date & v){
+        bool same =  (this->year == v.year && this->month == v.month && this->day == v.day);
+        if(same)
+            return true;
+        return this->year < v.year || (this->year==v.year && this->month<v.month) || (this->year == v.year && this->month == v.month && this->day < v.day);
+    };
+    bool operator <( const Date & v){
+        return this->year < v.year || (this->year==v.year && this->month<v.month) || (this->year == v.year && this->month == v.month && this->day < v.day);
+    };
+    TimeDiff operator -( const Date & v){
+        int day2 = v.day;
+        int day1 = this->day;
+        int mon2 = v.month;
+        int mon1 = this->month;
+        int year2 = v.year;
+        int year1 = this->year;
+        if(day2 < day1)
+        {
+            // borrow days from february
+            if (mon2 == 3)
+            {
+                //  check whether year is a leap year
+                if ((year2 % 4 == 0 && year2 % 100 != 0) || (year2 % 400 == 0))
+                    day2 += 29;
+                else
+                    day2 += 28;
+            }
+                // borrow days from April or June or September or November
+            else if (mon2 == 5 || mon2 == 7 || mon2 == 10 || mon2 == 12)
+                day2 += 30;
+                // borrow days from Jan or Mar or May or July or Aug or Oct or Dec
+            else
+                day2 += 31;
+
+            mon2 = mon2 - 1;
+        }
+        if (mon2 < mon1)
+        {
+            mon2 += 12;
+            year2 -= 1;
+        }
+        return TimeDiff(year2-year1,mon2-mon1,day2-day1);
     };
     std::string toString() {
         std::string year_date = std::to_string(year);
@@ -173,32 +247,7 @@ public:
     }
 
 };
-class TimeDiff : public INode{
-private:
-    int year=0;
-    int month=0;
-    int day =0;
-public:
-    TimeDiff(int y, int m, int d) :year(y),month(m),day(d){}
 
-    std::string toString() {
-        return std::to_string(year)+"y"+std::to_string(month)+"m"+std::to_string(day)+"d";
-    }
-    void accept(Visitor &v) override {
-        v.visit(*this);
-    }
-    TimeDiff operator +( const TimeDiff & v )
-    {
-        return TimeDiff( this->year + v.year, this->month + v.month, this->day + v.day );
-    }
-    bool operator ==( const TimeDiff & v){
-        return (this->year == v.year && this->month == v.month && this->day == v.day);
-    };
-    bool operator !=( const TimeDiff & v){
-        return (this->year != v.year || this->month != v.month || this->day != v.day);
-    };
-
-};
 
 class VariableAccess : public INode
 {
