@@ -16,6 +16,8 @@ public:
     int times_minus = 0;
     int times_negation = 0;
     bool to_continue = true;
+    bool last_was_if = false;
+    bool last_if_was_true = false;
     Scope global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, std::unique_ptr<Function>> functions;
@@ -24,10 +26,12 @@ public:
     void TryToAdd();
     void TryToSubstract();
     bool properType(TypeOfData type ,variantTypes value);
-    void TryToCompareValues(std::string);
+    void TryToCompareValues(std::string a);
+    void TryToAndOr(std::string a);
 //public:
     std::string debug = "";
     void visit(Declaration &element) override{
+        last_was_if = false;
         if(element.assignable != nullptr)
             element.assignable.operator*().accept(*this);
         else
@@ -98,6 +102,8 @@ public:
         element.child.operator*().accept(*this);
         if(element.wasNegation && results.back().index() !=3)
             ErrorHandler::printInterpreterError("negation not for bool type");
+        if(element.wasNegation && results.back().index() ==3)
+            results.back() = !std::get<bool>(results.back());
 
         if(element.wasMinus)
             times_minus = times_minus +1;
@@ -127,6 +133,7 @@ public:
             ErrorHandler::printInterpreterError("no variable in scope "+element.id);
     };
     void visit(FunCall &element) override{
+        last_was_if = false;
     };
     void visit(Function &element) override{
 
@@ -135,6 +142,8 @@ public:
             element.parameters[i].accept(*this);
         }
         element.body.operator*().accept(*this);
+        if(results.empty())
+            ErrorHandler::printInterpreterError("function did not return anything");
         if(!properType(element.dataType,results.back()))
             ErrorHandler::printInterpreterError("wrong return type in function "+element.name);
 
@@ -148,6 +157,7 @@ public:
         }
     };
     void visit(AssignStatement &element) override{
+        last_was_if = false;
         element.assignable.operator*().accept(*this);
 
         if(functions_scopes.back().existsInScope(element.var->id)){
@@ -194,30 +204,50 @@ public:
         results.emplace_back(element);
     };
     void visit(Return &element) override{
+        last_was_if = false;
         if(element.expression != nullptr)
             element.expression.operator*().accept(*this);
 
         to_continue = false;
     }
     void visit(While &element) override{
+        last_was_if = false;
     };
     void visit(If &element) override{
+
         element.condition.operator*().accept(*this);
         if(std::get<bool>(results.back())){
             results.pop_back();
+            functions_scopes.back().addScope();
             element.body.operator*().accept(*this);
-        }else
+            functions_scopes.back().popScope();
+            last_if_was_true = true;
+        }else{
             results.pop_back();
+            last_if_was_true = false;
+        }
+
+        last_was_if = true;
+
     };
     void visit(Else &element) override{
+        if(!last_was_if)
+            ErrorHandler::printInterpreterError("no if before else");
+        if(!last_if_was_true){
+            element.body.operator*().accept(*this);
+        }
+        last_was_if = false;
     };
     void visit(Condition &element) override{
-
+        element.left.operator*().accept(*this);
+        element.right.operator*().accept(*this);
+        TryToAndOr(element.operationType);
     }
     void visit(RelationalCondition &element) override{
         element.left.operator*().accept(*this);
         element.right.operator*().accept(*this);
         TryToCompareValues(element.operationType);
+
     }
 };
 

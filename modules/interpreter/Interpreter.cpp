@@ -153,4 +153,22 @@ void Interpreter::TryToCompareValues(std::string type){
         }, left_result, right_result);
     }
 }
+void Interpreter::TryToAndOr(std::string type){
+    auto right_result = results.back();
+    results.pop_back();
+    auto left_result = results.back();
+
+    if(type == "and"){
+        std::visit(overload{
+                [&](bool &left, bool&right ) { results.back() = left && right; },
+                [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot ''and'' those 2 arguments"); },
+        }, left_result, right_result);
+    }
+    else if(type == "or"){
+        std::visit(overload{
+                [&](bool &left, bool&right ) { results.back() = left || right; },
+                [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot ''and'' those 2 arguments"); },
+        }, left_result, right_result);
+    }
+}
 
