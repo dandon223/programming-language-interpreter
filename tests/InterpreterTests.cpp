@@ -230,4 +230,63 @@ BOOST_AUTO_TEST_SUITE(Interpreter_tests)
         if (program != nullptr)
             BOOST_CHECK_THROW(program->accept(interpreter),InterpreterException);
     }
+    BOOST_AUTO_TEST_CASE( if_else_statement_easy )
+    {
+        std::string text =  "fun int main():\n"
+                            "\tif 1 > 2:\n"
+                            "\t\treturn 1\n"
+                            "\telse:\n"
+                            "\t\treturn 2";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        Parser parser = Parser(lexer);
+        auto program = parser.TryToParseProgram();
+        Interpreter interpreter = Interpreter();
+        BOOST_CHECK(program != nullptr);
+        if (program != nullptr) {
+            program->accept(interpreter);
+            BOOST_CHECK(!interpreter.results.empty());
+            if(!interpreter.results.empty())
+                BOOST_CHECK(std::get<int>(interpreter.results.back()) ==2);
+        }
+    }
+    BOOST_AUTO_TEST_CASE( else_not_after_if )
+    {
+        std::string text =  "fun int main():\n"
+                            "\tif 1 > 2:\n"
+                            "\t\treturn 1\n"
+                            "\tint a = 1\n"
+                            "\telse:\n"
+                            "\t\treturn 2";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        Parser parser = Parser(lexer);
+        auto program = parser.TryToParseProgram();
+        Interpreter interpreter = Interpreter();
+        BOOST_CHECK(program != nullptr);
+        if (program != nullptr)
+            BOOST_CHECK_THROW(program->accept(interpreter),InterpreterException);
+    }
+    BOOST_AUTO_TEST_CASE( while_statement_easy )
+    {
+        std::string text = "fun int main():\n"
+                           "\tint a = 3\n"
+                           "\tint b =0\n"
+                           "\twhile a >1:\n"
+                           "\t\ta = a -1\n"
+                           "\t\tb =b +1\n"
+                           "\treturn b";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        Parser parser = Parser(lexer);
+        auto program = parser.TryToParseProgram();
+        Interpreter interpreter = Interpreter();
+        BOOST_CHECK(program != nullptr);
+        if (program != nullptr) {
+            program->accept(interpreter);
+            BOOST_CHECK(!interpreter.results.empty());
+            if(!interpreter.results.empty())
+                BOOST_CHECK(std::get<int>(interpreter.results.back()) ==2);
+        }
+    }
 BOOST_AUTO_TEST_SUITE_END()

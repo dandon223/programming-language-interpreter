@@ -212,6 +212,15 @@ public:
     }
     void visit(While &element) override{
         last_was_if = false;
+        functions_scopes.back().addScope();
+        element.condition.operator*().accept(*this);
+        while(std::get<bool>(results.back())){
+            results.pop_back();
+            element.body.operator*().accept(*this);
+            element.condition.operator*().accept(*this);
+        }
+        results.pop_back();
+        functions_scopes.back().popScope();
     };
     void visit(If &element) override{
 
@@ -226,9 +235,7 @@ public:
             results.pop_back();
             last_if_was_true = false;
         }
-
         last_was_if = true;
-
     };
     void visit(Else &element) override{
         if(!last_was_if)
