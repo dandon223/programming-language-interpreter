@@ -289,4 +289,71 @@ BOOST_AUTO_TEST_SUITE(Interpreter_tests)
                 BOOST_CHECK(std::get<int>(interpreter.results.back()) ==2);
         }
     }
+    BOOST_AUTO_TEST_CASE( function_call )
+    {
+        std::string text = "fun int a(int b,int c):\n"
+                           "\treturn c+10\n"
+                           "fun int main():\n"
+                           "\tint a = a(1,2)\n"
+                           "\treturn a";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        Parser parser = Parser(lexer);
+        auto program = parser.TryToParseProgram();
+        Interpreter interpreter = Interpreter();
+        BOOST_CHECK(program != nullptr);
+        if (program != nullptr) {
+            program->accept(interpreter);
+            BOOST_CHECK(!interpreter.results.empty());
+            if(!interpreter.results.empty())
+                BOOST_CHECK(std::get<int>(interpreter.results.back()) ==12);
+        }
+    }
+    BOOST_AUTO_TEST_CASE( recursive_function_call_with_global_variable )
+    {
+        std::string text = "int GLOBAL = 0\n"
+                           "fun int a(int b):\n"
+                           "\tif(b <=0):\n"
+                           "\t\treturn 1\n"
+                           "\tGLOBAL = GLOBAL +1\n"
+                           "\tb = b-1\n"
+                           "\treturn a(b)\n"
+                           "fun int main():\n"
+                           "\tint c =10\n"
+                           "\ta(c)\n"
+                           "\treturn 1";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        Parser parser = Parser(lexer);
+        auto program = parser.TryToParseProgram();
+        Interpreter interpreter = Interpreter();
+        BOOST_CHECK(program != nullptr);
+        if (program != nullptr) {
+            program->accept(interpreter);
+            BOOST_CHECK(std::get<int>(interpreter.global_scope.getValue("GLOBAL")) == 10);
+        }
+    }
+    BOOST_AUTO_TEST_CASE( recursive_function_call)
+    {
+        std::string text = "fun int a(int a,int b):\n"
+                           "\tif(b <=0):\n"
+                           "\t\treturn 0\n"
+                           "\ta = a +1\n"
+                           "\tb = b -1\n"
+                           "\treturn a(a,b) +1\n"
+                           "fun int main():\n"
+                           "\treturn a(0,10)";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        Parser parser = Parser(lexer);
+        auto program = parser.TryToParseProgram();
+        Interpreter interpreter = Interpreter();
+        BOOST_CHECK(program != nullptr);
+        if (program != nullptr) {
+            program->accept(interpreter);
+            BOOST_CHECK(!interpreter.results.empty());
+            if(!interpreter.results.empty())
+                BOOST_CHECK(std::get<int>(interpreter.results.back()) ==10);
+        }
+    }
 BOOST_AUTO_TEST_SUITE_END()

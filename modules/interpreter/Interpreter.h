@@ -18,6 +18,7 @@ public:
     bool to_continue = true;
     bool last_was_if = false;
     bool last_if_was_true = false;
+    bool variable_access_from_fun_call = false;
     Scope global_scope;
     std::vector<FunctionCallContext> functions_scopes;
     std::unordered_map<std::string, std::unique_ptr<Function>> functions;
@@ -72,8 +73,11 @@ public:
         functions_scopes.emplace_back(FunctionCallContext());
         functions_scopes.back().addScope();
         auto main = functions.find("main");
-        if(main != functions.end())
+        if(main != functions.end()){
+            if(!main->second->parameters.empty())
+                ErrorHandler::printInterpreterError("main function cannot have parameters");
             main->second->accept(*this);
+        }
         else
             ErrorHandler::printInterpreterError("did not find main function");
     };
@@ -127,18 +131,47 @@ public:
     void visit(Variable &element) override{
     };
     void visit(VariableAccess &element) override{
-        if(functions_scopes.back().existsInScope(element.id))
-            results.emplace_back(functions_scopes.back().getValue(element.id));
-        else
-            ErrorHandler::printInterpreterError("no variable in scope "+element.id);
+        if(variable_access_from_fun_call){
+            auto last_scope = functions_scopes.rbegin();
+            last_scope++;
+            if(last_scope.operator*().existsInScope(element.id))
+                results.emplace_back(last_scope->getValue(element.id));
+            else if(global_scope.exists(element.id))
+                results.emplace_back(global_scope.getValue(element.id));
+            else
+                ErrorHandler::printInterpreterError("no variable in scope "+element.id);
+
+        }else{
+            if(functions_scopes.back().existsInScope(element.id))
+                results.emplace_back(functions_scopes.back().getValue(element.id));
+            else if(global_scope.exists(element.id))
+                results.emplace_back(global_scope.getValue(element.id));
+            else
+                ErrorHandler::printInterpreterError("no variable in scope "+element.id);
+        }
     };
     void visit(FunCall &element) override{
         last_was_if = false;
+        functions_scopes.push_back(FunctionCallContext());
+        functions_scopes.back().addScope();
+        auto function = functions.find(element.id);
+        if(function == functions.end())
+            ErrorHandler::printInterpreterError("no such function defined "+element.id);
+        if(element.arguments.size() != function->second->parameters.size())
+            ErrorHandler::printInterpreterError("wrong number of arguments in function call " + element.id);
+
+        variable_access_from_fun_call = true;
+        for(auto argument = element.arguments.rbegin() ; argument != element.arguments.rend() ; argument++)
+            argument.operator*()->accept(*this);
+        variable_access_from_fun_call = false;
+
+        function->second.operator*().accept(*this);
+        functions_scopes.pop_back();
+        to_continue = true;
     };
     void visit(Function &element) override{
 
         for(long long unsigned int i =0 ; i < element.parameters.size();i++){
-            results.emplace_back(std::monostate{});
             element.parameters[i].accept(*this);
         }
         element.body.operator*().accept(*this);
@@ -162,6 +195,10 @@ public:
 
         if(functions_scopes.back().existsInScope(element.var->id)){
             functions_scopes.back().changeInScope(element.var->id,results.back());
+            results.pop_back();
+        }
+        else if(global_scope.exists(element.var->id)){
+            global_scope.changeValue(element.var->id,results.back());
             results.pop_back();
         }
         else
