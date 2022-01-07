@@ -62,6 +62,11 @@ void Interpreter::TryToAdd() {
             [&](double &left, double&right ) { results.back() = left + right; },
             [&](int &left, double&right ) { results.back() = double(left) + right; },
             [&](double &left, int&right ) { results.back() = left + double(right); },
+            [&](std::string &left, std::string&right ) { results.back() = left + right; },
+            [&](std::string &left, int&right ) { results.back() = left + std::to_string(right); },
+            [&](std::string &left, double&right ) { results.back() = left + std::to_string(right); },
+            [&](std::string &left, Date&right ) { results.back() = left + right.toString(); },
+            [&](std::string &left, TimeDiff&right ) { results.back() = left + right.toString(); },
             [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot add those 2 arguments"); },
     }, left_result, right_result);
 }
@@ -75,7 +80,7 @@ void Interpreter::TryToSubstract() {
             [&](double &left, double&right ) { results.back() = left - right; },
             [&](int &left, double&right ) { results.back() = double(left) - right; },
             [&](double &left, int&right ) { results.back() = left - double(right); },
-            [&](Date &left, Date &right ) { results.back() = left - right; },
+            [&](Date &left, Date &right ) { results.back() = right - left; },
             [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot substract those 2 arguments"); },
     }, left_result, right_result);
 }
@@ -170,5 +175,38 @@ void Interpreter::TryToAndOr(std::string type){
                 [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot ''and'' those 2 arguments"); },
         }, left_result, right_result);
     }
+}
+std::string Interpreter::toString(variantTypes value){
+    if(value.index() == 0)
+        return "";
+    if(value.index()==1)
+        return std::to_string(std::get<int>(value));
+    if(value.index()==2)
+        return std::to_string(std::get<double>(value));
+    if(value.index()==3){
+        bool b = std::get<bool>(value);
+        if(b)
+            return "true";
+        else
+            return "false";
+    }
+    if(value.index()==4)
+        return std::get<std::string>(value);
+    if( value.index()==5)
+        return std::get<Date>(value).toString();
+    if(value.index()==6)
+        return std::get<TimeDiff>(value).toString();
+    return "";
+}
+void Interpreter::addPrintFunction(){
+    std::string name = "print";
+    TypeOfData typeOfData = TypeOfData::Message;
+    std::vector<VariableDeclr> parameters;
+    VariableDeclr parameter;
+    parameter.id = "to_print";
+    parameter.typeOfData = TypeOfData::Message;
+    parameters.push_back(parameter);
+    auto function = std::make_unique<Function>(Function(name,typeOfData,parameters, nullptr));
+    functions.insert({name,std::move(function)});
 }
 

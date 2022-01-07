@@ -1,8 +1,2 @@
-fun int a(int a,int b):
-	if(b <=0):
-		return 0
-	a = a +1
-	b = b -1
-	return a(a,b) +1
-fun int main():
-	return a(0,10)
+fun timeDiff main():
+	return [2000:01:01] -[1999:05:05]

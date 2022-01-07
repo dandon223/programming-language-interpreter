@@ -29,6 +29,8 @@ public:
     bool properType(TypeOfData type ,variantTypes value);
     void TryToCompareValues(std::string a);
     void TryToAndOr(std::string a);
+    void addPrintFunction();
+    std::string toString(variantTypes type);
 //public:
     std::string debug = "";
     void visit(Declaration &element) override{
@@ -56,12 +58,13 @@ public:
     };
     void visit(Program &element) override
     {
-        debug += "Entering interpreter\n";
+        debug += "\nEntering interpreter\n";
         for(auto &declaration : element.declarations){
             if(declaration != nullptr)
                 visit(declaration.operator*());
         }
         debug += "----------------------------------------\n";
+        addPrintFunction();
         for(auto &function : element.functions){
             if(function != nullptr){
                 if(functions.find(function->name) == functions.end())
@@ -80,6 +83,7 @@ public:
         }
         else
             ErrorHandler::printInterpreterError("did not find main function");
+        debug= debug +"Returned value: "+toString(results.back());
     };
     void visit(AdvExpression &element) override{
         element.left.operator*().accept(*this);
@@ -171,9 +175,16 @@ public:
     };
     void visit(Function &element) override{
 
+
+
         for(long long unsigned int i =0 ; i < element.parameters.size();i++){
             element.parameters[i].accept(*this);
         }
+        if( element.name == "print"){
+            std::cout<< std::get<std::string>(functions_scopes.back().getValue("to_print"));
+            return;
+        }
+
         element.body.operator*().accept(*this);
         if(results.empty())
             ErrorHandler::printInterpreterError("function did not return anything");

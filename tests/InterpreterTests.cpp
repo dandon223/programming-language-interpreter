@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_SUITE(Interpreter_tests)
             BOOST_CHECK_THROW(program->accept(interpreter),InterpreterException);
         }
     }
-    BOOST_AUTO_TEST_CASE( returning_from_main )
+    BOOST_AUTO_TEST_CASE( returning_from_main1 )
     {
         std::string text =  "fun int main():\n"
                             "\treturn 1";
@@ -134,6 +134,23 @@ BOOST_AUTO_TEST_SUITE(Interpreter_tests)
                 BOOST_CHECK(std::get<int>(interpreter.results.back()) ==1);
         }
     }
+    BOOST_AUTO_TEST_CASE( returning_from_main2 )
+        {
+                std::string text = "fun timeDiff main():\n"
+                                   "\treturn [2000:01:01] -[1999:05:05]";
+        std::istringstream handle(text);
+        Lexer lexer = Lexer(handle);
+        Parser parser = Parser(lexer);
+        auto program = parser.TryToParseProgram();
+        Interpreter interpreter = Interpreter();
+        BOOST_CHECK(program != nullptr);
+        if (program != nullptr) {
+            program->accept(interpreter);
+            BOOST_CHECK(!interpreter.results.empty());
+            if(!interpreter.results.empty())
+                BOOST_CHECK(std::get<TimeDiff>(interpreter.results.back()).toString() == "0y7m27d");
+        }
+        }
     BOOST_AUTO_TEST_CASE( if_statement_easy )
     {
         std::string text =  "fun int main():\n"
