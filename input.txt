@@ -1,2 +1,4 @@
-fun timeDiff main():
-	return [2000:01:01] -[1999:05:05]
+fun int a():
+	return 1
+fun int main():
+	return a()

@@ -186,7 +186,7 @@ public:
         }
 
         element.body.operator*().accept(*this);
-        if(results.empty())
+        if(results.empty() || to_continue)
             ErrorHandler::printInterpreterError("function did not return anything");
         if(!properType(element.dataType,results.back()))
             ErrorHandler::printInterpreterError("wrong return type in function "+element.name);
