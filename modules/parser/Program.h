@@ -89,6 +89,8 @@ class INode
 {
 public:
     virtual void accept(Visitor &v){};
+    int line = 0;
+    int column = 0;
 };
 class IExpression : public INode
 {
@@ -271,7 +273,7 @@ class VariableAccess : public INode
 {
 public:
     std::string id;
-    VariableAccess(std::string _id) : id(_id){};
+    VariableAccess(std::string _id,int l, int c) : id(_id){line = l; column = c;};
     void accept(Visitor &visitor) override{
         visitor.visit(*this);
     };
@@ -284,7 +286,7 @@ public:
     std::unique_ptr<VariableAccess> var;
     std::unique_ptr<IExpression> assignable;
     AssignStatement(){};
-    AssignStatement(std::unique_ptr<VariableAccess> _var, std::unique_ptr<IExpression> _assignable) : var(std::move(_var)), assignable(std::move(_assignable)){};
+    AssignStatement(std::unique_ptr<VariableAccess> _var, std::unique_ptr<IExpression> _assignable,int l, int c) : var(std::move(_var)), assignable(std::move(_assignable)){line = l; column = c;};
     void accept(Visitor &visitor) override
     {
         visitor.visit(*this);
@@ -300,7 +302,7 @@ public:
         visitor.visit(*this);
     };
     VariableDeclr(){};
-    VariableDeclr(std::string _id, TypeOfData _typeOfData) : id(_id), typeOfData(_typeOfData){};
+    VariableDeclr(std::string _id, TypeOfData _typeOfData,int l, int c) : id(_id), typeOfData(_typeOfData){line = l; column = c;};
     std::string getId(){return id;}
     TypeOfData getTypeOfData(){return typeOfData;}
 };
@@ -334,7 +336,7 @@ class ParenthesisExpression : public IExpression
 public:
     std::unique_ptr<IExpression> child;
     ParenthesisExpression(){};
-    ParenthesisExpression(std::unique_ptr<IExpression> _child) : child(std::move(_child)){};
+    ParenthesisExpression(std::unique_ptr<IExpression> _child,int l , int c) : child(std::move(_child)){line = l; column = c;};
     void accept(Visitor &v) override {
         v.visit(*this);
     }
@@ -368,8 +370,7 @@ class FunCall : public INode
 public:
     std::string id;
     std::vector<std::shared_ptr<IExpression>> arguments;
-    FunCall(std::string _id, std::vector<std::shared_ptr<IExpression>> _arguments) : id(_id), arguments(std::move(_arguments)){
-    };
+    FunCall(std::string _id, std::vector<std::shared_ptr<IExpression>> _arguments,int l , int c) : id(_id), arguments(std::move(_arguments)){line = l;column = c;};
     void accept(Visitor &v) override {
         v.visit(*this);
     }
@@ -426,7 +427,7 @@ public:
     std::unique_ptr<IExpression> condition;
     std::unique_ptr<Body> body;
     If(){};
-    If(std::unique_ptr<IExpression> _condition, std::unique_ptr<Body> _body) : condition(std::move(_condition)), body(std::move(_body)){};
+    If(std::unique_ptr<IExpression> _condition, std::unique_ptr<Body> _body,int l, int c) : condition(std::move(_condition)), body(std::move(_body)){line= l;column = c;};
     void accept(Visitor &v) override {
         v.visit(*this);
     }
@@ -436,7 +437,7 @@ class Else : public INode
 public:
     std::unique_ptr<Body> body;
     Else(){};
-    Else(std::unique_ptr<Body> _body) : body(std::move(_body)){};
+    Else(std::unique_ptr<Body> _body,int l, int c) : body(std::move(_body)){line= l;column = c;};
     void accept(Visitor &v) override {
         v.visit(*this);
     }
@@ -447,7 +448,7 @@ public:
     std::unique_ptr<IExpression> condition;
     std::unique_ptr<Body> body;
     While(){};
-    While(std::unique_ptr<IExpression> _condition, std::unique_ptr<Body> _body) : condition(std::move(_condition)), body(std::move(_body)){};
+    While(std::unique_ptr<IExpression> _condition, std::unique_ptr<Body> _body,int l, int c) : condition(std::move(_condition)), body(std::move(_body)){line= l;column = c;};
     void accept(Visitor &v) override {
         v.visit(*this);
     }
@@ -468,11 +469,11 @@ class Function: public INode
 {
 public:
     explicit Function(std::string _name, TypeOfData _dataType,
-                      std::vector<VariableDeclr> _parameters, std::unique_ptr<Body> _body) : name(_name),
-                                                                            dataType(_dataType), parameters(std::move(_parameters)), body(std::move(_body)){};
+                      std::vector<VariableDeclr> _parameters, std::unique_ptr<Body> _body, int l,int c) : name(_name),
+                                                                            dataType(_dataType), parameters(std::move(_parameters)), body(std::move(_body)){line = l; column = c;};
     explicit Function(std::string _name, TypeOfData _dataType,
-                      std::vector<VariableDeclr> _parameters) : name(_name),
-                                                                          dataType(_dataType), parameters(std::move(_parameters)){};
+                      std::vector<VariableDeclr> _parameters, int l,int c) : name(_name),
+                                                                          dataType(_dataType), parameters(std::move(_parameters)){line = l; column = c;};
     Function(){};
     std::string name;
     TypeOfData dataType;

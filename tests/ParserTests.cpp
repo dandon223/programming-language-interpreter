@@ -98,7 +98,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         auto function_body = std::make_unique<Body>(Body(std::move(statements)));
 
 
-        auto functionDef = std::make_unique<Function>(Function(name,return_data,std::move(parameters),std::move(function_body)));
+        auto functionDef = std::make_unique<Function>(Function(name,return_data,std::move(parameters),std::move(function_body),0,0));
         std::vector<std::unique_ptr<Declaration>> declarations;
         std::vector<std::unique_ptr<Function>> functions;
         functions.push_back(std::move(functionDef));
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         auto declaration = std::make_unique<Declaration>(Declaration(variable_decl,std::move(basic_expr)));
         std::vector<std::shared_ptr<INode>> statements;
         // if
-        auto variable_access = std::make_unique<VariableAccess>(VariableAccess("napis"));
+        auto variable_access = std::make_unique<VariableAccess>(VariableAccess("napis",0,0));
         auto basic_expr1 = std::make_unique<BasicExpression>(BasicExpression(std::move(variable_access),false,false));
 
         auto string1 = std::make_unique<String>(String("A"));
@@ -147,24 +147,24 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         auto string2 = std::make_unique<String>(String("Tak"));
         auto basic_expr3 = std::make_unique<BasicExpression>(BasicExpression(std::move(string2),false,false));
         std::vector<std::shared_ptr<IExpression>> b; b.push_back(std::move(basic_expr3));
-        auto fun_call = std::make_unique<FunCall>(FunCall("print",std::move(b)));
+        auto fun_call = std::make_unique<FunCall>(FunCall("print",std::move(b),0,0));
         std::vector<std::shared_ptr<INode>> if_body_statements;
         if_body_statements.push_back(std::move(fun_call));
 
         auto if_body = std::make_unique<Body>(Body(std::move(if_body_statements)));
 
-        auto if_statement = std::make_unique<If>(If(std::move(relative_condition),std::move(if_body)));
+        auto if_statement = std::make_unique<If>(If(std::move(relative_condition),std::move(if_body),0,0));
         // else
-        auto variable_access2 = std::make_unique<VariableAccess>(VariableAccess("napis"));
+        auto variable_access2 = std::make_unique<VariableAccess>(VariableAccess("napis",0,0));
         auto basic_expr4 = std::make_unique<BasicExpression>(BasicExpression(std::move(variable_access2),false,false));
         std::vector<std::shared_ptr<IExpression>> c; c.push_back(std::move(basic_expr4));
-        auto fun_call2 = std::make_unique<FunCall>(FunCall("print",std::move(c)));
+        auto fun_call2 = std::make_unique<FunCall>(FunCall("print",std::move(c),0,0));
         std::vector<std::shared_ptr<INode>> else_body_statements;
         else_body_statements.push_back(std::move(fun_call2));
 
         auto else_body = std::make_unique<Body>(Body(std::move(else_body_statements)));
 
-        auto else_statement = std::make_unique<Else>(Else(std::move(else_body)));
+        auto else_statement = std::make_unique<Else>(Else(std::move(else_body),0,0));
 
 
         statements.push_back(std::move(declaration));
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_SUITE(Parser_basic_tests)
         statements.push_back(std::move(statement));
         auto function_body = std::make_unique<Body>(Body(std::move(statements)));
 
-        auto functionDef = std::make_unique<Function>(Function(name,return_data,std::move(parameters),std::move(function_body)));
+        auto functionDef = std::make_unique<Function>(Function(name,return_data,std::move(parameters),std::move(function_body),0,0));
         std::vector<std::unique_ptr<Declaration>> declarations;
         std::vector<std::unique_ptr<Function>> functions;
         functions.push_back(std::move(functionDef));

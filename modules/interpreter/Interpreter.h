@@ -47,14 +47,14 @@ public:
 
             if(!functions_scopes.empty() && !functions_scopes.back().existsInLastScope(element.id))
                 functions_scopes.back().addToScope(element.id,element.typeOfData,results.back());
-            else if(!global_scope.exists(element.id))
+            else if(functions_scopes.empty() && !global_scope.exists(element.id))
                 global_scope.addToScope(element.id,element.typeOfData,results.back());
             else
-                ErrorHandler::printInterpreterError("variable already declared");
+                ErrorHandler::printInterpreterError("variable already declared",element.line,element.column);
 
             results.pop_back();
         }else
-            ErrorHandler::printInterpreterError("wrong type in variable declaration");
+            ErrorHandler::printInterpreterError("wrong type in variable declaration",element.line,element.column);
     };
     void visit(Program &element) override
     {
@@ -70,7 +70,7 @@ public:
                 if(functions.find(function->name) == functions.end())
                     functions.insert({function->name,std::move(function)});
                 else
-                    ErrorHandler::printInterpreterError("function already defined");
+                    ErrorHandler::printInterpreterError("function "+function->name+" already defined",function->line,function->column);
             }
         }
         functions_scopes.emplace_back(FunctionCallContext());
@@ -78,7 +78,7 @@ public:
         auto main = functions.find("main");
         if(main != functions.end()){
             if(!main->second->parameters.empty())
-                ErrorHandler::printInterpreterError("main function cannot have parameters");
+                ErrorHandler::printInterpreterError("main function cannot have parameters",main->second->line,main->second->column);
             main->second->accept(*this);
         }
         else
@@ -109,7 +109,7 @@ public:
 
         element.child.operator*().accept(*this);
         if(element.wasNegation && results.back().index() !=3)
-            ErrorHandler::printInterpreterError("negation not for bool type");
+            ErrorHandler::printInterpreterError("negation not for bool type",element.line,element.column);
         if(element.wasNegation && results.back().index() ==3)
             results.back() = !std::get<bool>(results.back());
 
@@ -143,7 +143,7 @@ public:
             else if(global_scope.exists(element.id))
                 results.emplace_back(global_scope.getValue(element.id));
             else
-                ErrorHandler::printInterpreterError("no variable in scope "+element.id);
+                ErrorHandler::printInterpreterError("no variable in scope "+element.id,element.line,element.column);
 
         }else{
             if(functions_scopes.back().existsInScope(element.id))
@@ -151,7 +151,7 @@ public:
             else if(global_scope.exists(element.id))
                 results.emplace_back(global_scope.getValue(element.id));
             else
-                ErrorHandler::printInterpreterError("no variable in scope "+element.id);
+                ErrorHandler::printInterpreterError("no variable in scope "+element.id,element.line,element.column);
         }
     };
     void visit(FunCall &element) override{
@@ -160,9 +160,9 @@ public:
         functions_scopes.back().addScope();
         auto function = functions.find(element.id);
         if(function == functions.end())
-            ErrorHandler::printInterpreterError("no such function defined "+element.id);
+            ErrorHandler::printInterpreterError("no such function defined "+element.id,element.line,element.column);
         if(element.arguments.size() != function->second->parameters.size())
-            ErrorHandler::printInterpreterError("wrong number of arguments in function call " + element.id);
+            ErrorHandler::printInterpreterError("wrong number of arguments in function call " + element.id,element.line,element.column);
 
         variable_access_from_fun_call = true;
         for(auto argument = element.arguments.rbegin() ; argument != element.arguments.rend() ; argument++)
@@ -175,8 +175,6 @@ public:
     };
     void visit(Function &element) override{
 
-
-
         for(long long unsigned int i =0 ; i < element.parameters.size();i++){
             element.parameters[i].accept(*this);
         }
@@ -187,9 +185,9 @@ public:
 
         element.body.operator*().accept(*this);
         if(results.empty() || to_continue)
-            ErrorHandler::printInterpreterError("function did not return anything");
+            ErrorHandler::printInterpreterError("function "+element.name+" did not return anything",element.line,element.column);
         if(!properType(element.dataType,results.back()))
-            ErrorHandler::printInterpreterError("wrong return type in function "+element.name);
+            ErrorHandler::printInterpreterError("wrong return type in function "+element.name,element.line,element.column);
 
     };
     void visit(Body &element) override{
@@ -213,7 +211,7 @@ public:
             results.pop_back();
         }
         else
-            ErrorHandler::printInterpreterError("no variable in scope "+element.var->id);
+            ErrorHandler::printInterpreterError("no variable in scope "+element.var->id, element.line,element.column);
     }
     void visit(Int &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
@@ -224,9 +222,6 @@ public:
         results.emplace_back(element.value * is_minus);
     };
     void visit(Bool &element) override{
-        int is_minus = times_minus % 2 ==0 ? 1 : -1;
-        if(is_minus == -1)
-            ErrorHandler::printInterpreterError("Bool can not have minus sign");
         int is_negation = times_negation % 2 ==0 ? 1:-1;
         if(is_negation == -1)
             results.emplace_back(!element.value);
@@ -234,21 +229,12 @@ public:
             results.emplace_back(element.value);
     };
     void visit(String &element) override{
-        int is_minus = times_minus % 2 ==0 ? 1 : -1;
-        if(is_minus == -1)
-            ErrorHandler::printInterpreterError("String can not have minus sign");
         results.emplace_back(element.value);
     };
     void visit(Date &element) override{
-        int is_minus = times_minus % 2 ==0 ? 1 : -1;
-        if(is_minus == -1)
-            ErrorHandler::printInterpreterError("Date can not have minus sign");
         results.emplace_back(element);
     };
     void visit(TimeDiff &element) override{
-        int is_minus = times_minus % 2 ==0 ? 1 : -1;
-        if(is_minus == -1)
-            ErrorHandler::printInterpreterError("TimeDiff can not have minus sign");
         results.emplace_back(element);
     };
     void visit(Return &element) override{
@@ -262,6 +248,8 @@ public:
         last_was_if = false;
         functions_scopes.back().addScope();
         element.condition.operator*().accept(*this);
+        if(results.back().index()!=3)
+            ErrorHandler::printInterpreterError("cannot evaluate 'while' condition to bool",element.line,element.column);
         while(std::get<bool>(results.back())){
             results.pop_back();
             element.body.operator*().accept(*this);
@@ -273,6 +261,8 @@ public:
     void visit(If &element) override{
 
         element.condition.operator*().accept(*this);
+        if(results.back().index()!=3)
+            ErrorHandler::printInterpreterError("cannot evaluate 'if' condition to bool",element.line,element.column);
         if(std::get<bool>(results.back())){
             results.pop_back();
             functions_scopes.back().addScope();
@@ -287,7 +277,7 @@ public:
     };
     void visit(Else &element) override{
         if(!last_was_if)
-            ErrorHandler::printInterpreterError("no if before else");
+            ErrorHandler::printInterpreterError("no if statement before else statement",element.line,element.column);
         if(!last_if_was_true){
             element.body.operator*().accept(*this);
         }
@@ -302,9 +292,6 @@ public:
         element.left.operator*().accept(*this);
         element.right.operator*().accept(*this);
         TryToCompareValues(element.operationType);
-
     }
 };
-
-
 #endif //TKOM_21Z_DANIEL_INTERPRETER_H

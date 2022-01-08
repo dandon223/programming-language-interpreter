@@ -1,4 +1,4 @@
-fun int a():
-	return 1
 fun int main():
-	return a()
+	b = 2
+	return 1
+

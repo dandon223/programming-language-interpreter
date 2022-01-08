@@ -30,6 +30,7 @@ public:
     static void printLexerError(Token token , std::string line);
     static void printParserError(Token token , std::string line);
     static void printInterpreterError(std::string line);
+    static void printInterpreterError(std::string message, int line, int column);
 };
 
 

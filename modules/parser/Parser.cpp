@@ -56,6 +56,8 @@ std::unique_ptr<INode> Parser::TryToParseFunctionOrVarDefinition(int indentation
 std::unique_ptr<INode> Parser::TryToParseFunction(int indentation){
     if(currentToken.type != TokenType::Function) // 'fun'
         return nullptr;
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     getNextToken();
 
     if (currentToken.type != TokenType::Int && currentToken.type != TokenType::Float  // typ
@@ -75,7 +77,7 @@ std::unique_ptr<INode> Parser::TryToParseFunction(int indentation){
     auto body = TryToParseBody(indentation);
     if(body == nullptr)
         ErrorHandler::printParserError(currentToken,"no body in function");
-    return std::make_unique<Function>(Function(id,typeOfData,params,std::move(body)));
+    return std::make_unique<Function>(Function(id,typeOfData,params,std::move(body),line,column));
 }
 std::unique_ptr<Body> Parser::TryToParseBody(int indentation) {
     std::vector<std::shared_ptr<INode>> statements;
@@ -100,14 +102,18 @@ std::unique_ptr<Body> Parser::TryToParseBody(int indentation) {
 std::unique_ptr<Else> Parser::TryToParseElseStatement(int indentation){
     if (currentToken.type != TokenType::Else)
         return nullptr;
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     getNextToken();
     expect_and_accept(TokenType::Colon, "no : after else");
     auto body = TryToParseBody(indentation);
     if(body == nullptr)
         ErrorHandler::printParserError(currentToken,"if statement has no body");
-    return std::make_unique<Else>(Else(std::move(body)));
+    return std::make_unique<Else>(Else(std::move(body),line,column));
 }
 std::unique_ptr<If> Parser::TryToParseIfStatement(int indentation){
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     if (currentToken.type != TokenType::If)
         return nullptr;
     getNextToken();
@@ -118,9 +124,11 @@ std::unique_ptr<If> Parser::TryToParseIfStatement(int indentation){
     auto body = TryToParseBody(indentation);
     if(body == nullptr)
         ErrorHandler::printParserError(currentToken,"if statement has no body");
-    return std::make_unique<If>(If(std::move(condition), std::move(body)));
+    return std::make_unique<If>(If(std::move(condition), std::move(body),line,column));
 }
 std::unique_ptr<While> Parser::TryToParseWhileStatement(int indentation){
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     if (currentToken.type != TokenType::While)
         return nullptr;
     getNextToken();
@@ -131,7 +139,7 @@ std::unique_ptr<While> Parser::TryToParseWhileStatement(int indentation){
     auto body = TryToParseBody(indentation);
     if(body == nullptr)
         ErrorHandler::printParserError(currentToken,"while statement has no body");
-    return std::make_unique<While>(While(std::move(condition), std::move(body)));
+    return std::make_unique<While>(While(std::move(condition), std::move(body),line,column));
 }
 std::unique_ptr<Return> Parser::TryToParseReturnStatement(){
     if (currentToken.type != TokenType::Return)
@@ -153,15 +161,17 @@ std::unique_ptr<INode> Parser::TryToParseAssignOrFunCall(){
     return nullptr;
 }
 std::unique_ptr<AssignStatement> Parser::TryToParseAssignStatement(std::string id){
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     getNextToken();
-    auto var = std::make_unique<VariableAccess>(VariableAccess(id));
+    auto var = std::make_unique<VariableAccess>(VariableAccess(id,line,column));
 
     auto s = TryToParseExpression();
     if(!s)
         ErrorHandler::printParserError(currentToken,  "failed to parse expression in AssignStatement");
     if (currentToken.type == TokenType::Right_parentheses)
         getNextToken();
-    return std::make_unique<AssignStatement>(AssignStatement(std::move(var), std::move(s)));
+    return std::make_unique<AssignStatement>(AssignStatement(std::move(var), std::move(s),line,column));
 }
 std::vector<VariableDeclr> Parser::TryToParseParameters(){
     std::vector<VariableDeclr> parameters;
@@ -182,10 +192,12 @@ std::vector<VariableDeclr> Parser::TryToParseParameters(){
             && currentToken.type != TokenType::String && currentToken.type != TokenType::Date && currentToken.type != TokenType::Time_diff && currentToken.type != TokenType::Bool)
             ErrorHandler::printParserError(currentToken,"No valid type or no type");
         TypeOfData tod = getTypeOfData(currentToken.type);
+        int line = currentToken.line_number;
+        int column = currentToken.column_number;
         getNextToken();
-        expect(TokenType::Id, "no id after type\n");
+        expect(TokenType::Id, "no id after type");
         std::string param_id = std::get<std::string>(currentToken.value);
-        parameters.push_back(VariableDeclr(param_id, tod));
+        parameters.push_back(VariableDeclr(param_id, tod,line,column));
         getNextToken();
     } while (currentToken.type == TokenType::Comma);
 
@@ -199,6 +211,8 @@ std::unique_ptr<Declaration> Parser::TryToParseVariableDeclaration(){
     VariableDeclr var;
     std::unique_ptr<IExpression> assignable;
     var.typeOfData = getTypeOfData(currentToken.type);
+    var.line = currentToken.line_number;
+    var.column = currentToken.column_number;
     getNextToken();
 
     expect(TokenType::Id, "no id in declare statement");
@@ -297,6 +311,8 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
         wasMinus = true;
         getNextToken();
     }
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     if(currentToken.type == TokenType::Number)
     {
         if(wasNegation)
@@ -347,7 +363,7 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicExpression()
     }
     else if(currentToken.type == TokenType::Id){
         std::string id = std::get<std::string>(currentToken.value);
-        basic = std::make_unique<VariableAccess>(VariableAccess(id));
+        basic = std::make_unique<VariableAccess>(VariableAccess(id,line,column));
         getNextToken();
         auto function = TryToParseFunctionCall(id);
         if(function)
@@ -394,23 +410,29 @@ std::unique_ptr<IExpression> Parser::TryToParseBasicCondition(){
     return nullptr;
 }
 std::unique_ptr<IExpression> Parser::TryToParseParenthesisCondition(){
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     expect_and_accept(TokenType::Left_parentheses, "no left parenthesis");
     auto condition = TryToParseCondition();
     expect_and_accept(TokenType::Right_parentheses, "no right parenthesis");
-    return std::make_unique<ParenthesisExpression>(ParenthesisExpression(std::move(condition)));
+    return std::make_unique<ParenthesisExpression>(ParenthesisExpression(std::move(condition),line,column));
 }
 std::unique_ptr<IExpression> Parser::TryToParseParenthesisExpresion(){
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     expect_and_accept(TokenType::Left_parentheses, "no left parenthesis");
     auto expression = TryToParseExpression();
     expect_and_accept(TokenType::Right_parentheses, "no right parenthesis");
-    return std::make_unique<ParenthesisExpression>(ParenthesisExpression(std::move(expression)));
+    return std::make_unique<ParenthesisExpression>(ParenthesisExpression(std::move(expression),line,column));
 }
 std::unique_ptr<FunCall> Parser::TryToParseFunctionCall(std::string id){
+    int line = currentToken.line_number;
+    int column = currentToken.column_number;
     if(currentToken.type != TokenType::Left_parentheses)
         return nullptr;
     getNextToken();
     std::vector<std::shared_ptr<IExpression>> arguments = TryToParseArguments();
-    return std::make_unique<FunCall>(FunCall(id,std::move(arguments)));
+    return std::make_unique<FunCall>(FunCall(id,std::move(arguments),line,column));
 }
 std::vector<std::shared_ptr<IExpression>> Parser::TryToParseArguments(){
     std::vector<std::shared_ptr<IExpression>> arguments;

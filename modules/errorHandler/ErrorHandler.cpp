@@ -24,3 +24,10 @@ void ErrorHandler::printInterpreterError(std::string line) {
     interpreterException.error = line;
     throw interpreterException;
 }
+void ErrorHandler::printInterpreterError(std::string message, int line, int column) {
+    std::cerr << "\nError while interpreting\n";
+    std::cerr << message << " on line "<<line<<" in column "<<column<<std::endl;
+    InterpreterException interpreterException = InterpreterException();
+    interpreterException.error = message;
+    throw interpreterException;
+}

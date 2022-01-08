@@ -206,7 +206,7 @@ void Interpreter::addPrintFunction(){
     parameter.id = "to_print";
     parameter.typeOfData = TypeOfData::Message;
     parameters.push_back(parameter);
-    auto function = std::make_unique<Function>(Function(name,typeOfData,parameters, nullptr));
+    auto function = std::make_unique<Function>(Function(name,typeOfData,parameters, nullptr,0,0));
     functions.insert({name,std::move(function)});
 }
 
