@@ -1,4 +1,4 @@
 fun int main():
-	b = 2
+	int b = 2
 	return 1
 

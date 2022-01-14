@@ -30,6 +30,7 @@ public:
     void TryToCompareValues(std::string a);
     void TryToAndOr(std::string a);
     void addPrintFunction();
+    void checkDate();
     std::string toString(variantTypes type);
 //public:
     std::string debug = "";

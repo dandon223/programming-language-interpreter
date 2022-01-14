@@ -9,6 +9,7 @@
 #include <iostream>
 #include <algorithm>
 #include <memory>
+//#include "../errorHandler/ErrorHandler.h"
 class Declaration;
 class VariableDeclr;
 class Expression;
@@ -140,11 +141,10 @@ public:
     };
 };
 class TimeDiff : public INode{
-private:
+public:
     int year=0;
     int month=0;
     int day =0;
-public:
     TimeDiff(int y, int m, int d) :year(y),month(m),day(d){}
 
     std::string toString() {
@@ -178,13 +178,13 @@ public:
         return this->year > v.year || (this->year==v.year && this->month>v.month) || (this->year == v.year && this->month == v.month && this->day > v.day);
     };
 
+
 };
 class Date : public INode{
-private:
+public:
     int year = 1970;
     int month = 1;
     int day = 1;
-public:
     Date(int y, int m, int d) :year(y),month(m),day(d){}
     bool operator ==( const Date & v){
         return (this->year == v.year && this->month == v.month && this->day == v.day);
@@ -209,6 +209,12 @@ public:
     };
     bool operator >( const Date & v){
         return this->year > v.year || (this->year==v.year && this->month>v.month) || (this->year == v.year && this->month == v.month && this->day > v.day);
+    };
+    Date operator +( const TimeDiff & v){
+        return Date(this->year+v.year, this->month+v.month, this->day+v.day);
+    };
+    Date operator -( const TimeDiff & v){
+        return Date(this->year-v.year, this->month-v.month, this->day-v.day);
     };
     TimeDiff operator -( const Date & v){
         int day2 = v.day;
@@ -267,7 +273,12 @@ public:
     }
 
 };
-
+Date operator +( const TimeDiff & v,const Date x){
+    return Date(v.year+x.year, x.month+v.month, x.day+v.day);
+};
+Date operator -( const TimeDiff & v,const Date x){
+    return Date(x.year-v.year, x.month-v.month, x.day-v.day);
+};
 
 class VariableAccess : public INode
 {
