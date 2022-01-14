@@ -63,7 +63,7 @@ void Interpreter::TryToAdd() {
             [&](int &left, double&right ) { results.back() = double(left) + right; },
             [&](double &left, int&right ) { results.back() = left + double(right); },
             [&](Date &left, TimeDiff&right ) { results.back() = left + right; checkDate();},
-            [&](TimeDiff &left, Date&right ) { results.back() = left + right; checkDate();},
+            [&](TimeDiff &left, Date&right ) { results.back() = right + left; checkDate();},
             [&](std::string &left, std::string&right ) { results.back() = left + right; },
             [&](std::string &left, int&right ) { results.back() = left + std::to_string(right); },
             [&](std::string &left, double&right ) { results.back() = left + std::to_string(right); },
@@ -72,6 +72,7 @@ void Interpreter::TryToAdd() {
             [](auto &left, auto &right) { ErrorHandler::printInterpreterError("cannot add those 2 arguments"); },
     }, left_result, right_result);
 }
+
 void Interpreter::TryToSubstract() {
     auto right_result = results.back();
     results.pop_back();
@@ -83,11 +84,11 @@ void Interpreter::TryToSubstract() {
             [&](int &left, double&right ) { results.back() = double(left) - right; },
             [&](double &left, int&right ) { results.back() = left - double(right); },
             [&](Date &left, Date &right ) { results.back() = right - left; },
-            [&](TimeDiff &left, Date &right ) { results.back() = right - left; checkDate();},
-            [&](Date &left, TimeDiff &right ) { results.back() = right - left; checkDate();},
+            [&](Date &left, TimeDiff &right ) { results.back() = left - right; checkDate();},
             [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot substract those 2 arguments"); },
     }, left_result, right_result);
 }
+
 void Interpreter::TryToCompareValues(std::string type){
     auto right_result = results.back();
     results.pop_back();
@@ -221,7 +222,6 @@ void Interpreter::checkDate(){
         ErrorHandler::printInterpreterError("new date has more than 12 months");
     if (date.month == 3)
     {
-        //  check whether year is a leap year
         if ((date.year % 4 == 0 && date.year % 100 != 0) || (date.year % 400 == 0)){
             if(date.day>29)
                 ErrorHandler::printInterpreterError("to many days in date");
@@ -229,12 +229,10 @@ void Interpreter::checkDate(){
         else if(date.day>28)
             ErrorHandler::printInterpreterError("to many days in date");
     }
-        // borrow days from April or June or September or November
     else if (date.month == 5 || date.month == 7 || date.month == 10 || date.month == 12){
         if(date.day>30)
             ErrorHandler::printInterpreterError("to many days in date");
     }
-        // borrow days from Jan or Mar or May or July or Aug or Oct or Dec
     else
     if(date.day>31)
         ErrorHandler::printInterpreterError("to many days in date");

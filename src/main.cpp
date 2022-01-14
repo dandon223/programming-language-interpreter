@@ -14,8 +14,7 @@ int main()
 
     std::istream handle(&ifst);
     Lexer lexer = Lexer(handle);
-//   while(!lexer.endOfFile())
-//       std::cout << getStringToken(lexer.getNextToken()) <<"\n";
+
     Parser parser = Parser(lexer);
     std::unique_ptr<Program> program = parser.TryToParseProgram();
     if(program){

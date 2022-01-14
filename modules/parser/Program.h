@@ -273,12 +273,6 @@ public:
     }
 
 };
-Date operator +( const TimeDiff & v,const Date x){
-    return Date(v.year+x.year, x.month+v.month, x.day+v.day);
-};
-Date operator -( const TimeDiff & v,const Date x){
-    return Date(x.year-v.year, x.month-v.month, x.day-v.day);
-};
 
 class VariableAccess : public INode
 {
