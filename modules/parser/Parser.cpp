@@ -99,6 +99,7 @@ std::unique_ptr<Body> Parser::TryToParseBody(int indentation) {
     }
     return std::make_unique<Body>(Body(std::move(statements)));
 }
+// else parsowane osobno od if, prawidlowość if -else sprawdzana na poziomie interpretera
 std::unique_ptr<Else> Parser::TryToParseElseStatement(int indentation){
     if (currentToken.type != TokenType::Else)
         return nullptr;

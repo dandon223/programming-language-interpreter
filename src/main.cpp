@@ -1,12 +1,9 @@
 #include <iostream>
-#include <fstream>
 #include <sstream>
 #include "../modules/lexer/Lexer.h"
 #include "../modules/parser/Parser.h"
-#include "../modules/token/Token.h"
 #include "../modules/interpreter/Interpreter.h"
 
-//int main(int argc, char *argv[])
 int main()
 {
     std::filebuf ifst;

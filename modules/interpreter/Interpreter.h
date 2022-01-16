@@ -44,8 +44,9 @@ public:
     };
     void visit(VariableDeclr &element) override
     {
+        // sprawdza czy typ wyniku jest zgodny z zadeklarowanym typem zmiennej
         if(properType(element.typeOfData,results.back())){
-
+            // sprawdza czy nie ma juz tej zmiennej w zakresie funkcji lub globalnym
             if(!functions_scopes.empty() && !functions_scopes.back().existsInLastScope(element.id))
                 functions_scopes.back().addToScope(element.id,element.typeOfData,results.back());
             else if(functions_scopes.empty() && !global_scope.exists(element.id))
@@ -57,6 +58,7 @@ public:
         }else
             ErrorHandler::printInterpreterError("wrong type in variable declaration",element.line,element.column);
     };
+    // początek interpretacji drzewa
     void visit(Program &element) override
     {
         debug += "\nEntering interpreter\n";
@@ -136,26 +138,29 @@ public:
     void visit(Variable &element) override{
     };
     void visit(VariableAccess &element) override{
+        // jeżeli jest to wywolanie funckji to trzeba  wartosci podanych argumentów szukać w konekście poprzedniej funkcji
+        // wywolywane przez wizytator w funcall
         if(variable_access_from_fun_call){
             auto last_scope = functions_scopes.rbegin();
             last_scope++;
-            if(last_scope.operator*().existsInScope(element.id))
+            if(last_scope.operator*().existsInScope(element.id) && last_scope->getValue(element.id).index() != 0) // 0 to std::monostate{}
                 results.emplace_back(last_scope->getValue(element.id));
-            else if(global_scope.exists(element.id))
+            else if(global_scope.exists(element.id) && global_scope.getValue(element.id).index() != 0) // 0 to std::monostate{}
                 results.emplace_back(global_scope.getValue(element.id));
             else
-                ErrorHandler::printInterpreterError("no variable in scope "+element.id,element.line,element.column);
+                ErrorHandler::printInterpreterError("no variable in scope or value not assigned "+element.id,element.line,element.column);
 
         }else{
-            if(functions_scopes.back().existsInScope(element.id))
+            if(functions_scopes.back().existsInScope(element.id) && functions_scopes.back().getValue(element.id).index() != 0) // 0 to std::monostate{}
                 results.emplace_back(functions_scopes.back().getValue(element.id));
-            else if(global_scope.exists(element.id))
+            else if(global_scope.exists(element.id) && global_scope.getValue(element.id).index() != 0) // 0 to std::monostate{}
                 results.emplace_back(global_scope.getValue(element.id));
             else
-                ErrorHandler::printInterpreterError("no variable in scope "+element.id,element.line,element.column);
+                ErrorHandler::printInterpreterError("no variable in scope or value not assigned "+element.id,element.line,element.column);
         }
     };
     void visit(FunCall &element) override{
+        // przy kazdym wywolaniu funkcji tworzony jest dla niej nowy kontekst wraz z pierwszym zakresem zmiennych
         last_was_if = false;
         functions_scopes.push_back(FunctionCallContext());
         functions_scopes.back().addScope();
@@ -203,16 +208,16 @@ public:
         last_was_if = false;
         element.assignable.operator*().accept(*this);
 
-        if(functions_scopes.back().existsInScope(element.var->id)){
+        if(functions_scopes.back().existsInScope(element.var->id) && properType(functions_scopes.back().getType(element.var->id),results.back())){
             functions_scopes.back().changeInScope(element.var->id,results.back());
             results.pop_back();
         }
-        else if(global_scope.exists(element.var->id)){
+        else if(global_scope.exists(element.var->id) && properType(global_scope.getTokenType(element.var->id),results.back())){
             global_scope.changeValue(element.var->id,results.back());
             results.pop_back();
         }
         else
-            ErrorHandler::printInterpreterError("no variable in scope "+element.var->id, element.line,element.column);
+            ErrorHandler::printInterpreterError("no variable in scope or attempt to assign wrong type to variable "+element.var->id, element.line,element.column);
     }
     void visit(Int &element) override{
         int is_minus = times_minus % 2 ==0 ? 1 : -1;
@@ -243,6 +248,7 @@ public:
         if(element.expression != nullptr)
             element.expression.operator*().accept(*this);
 
+        // wychodzimy z petli w body
         to_continue = false;
     }
     void visit(While &element) override{
@@ -274,6 +280,7 @@ public:
             results.pop_back();
             last_if_was_true = false;
         }
+        // ustawiane dla przypadku gdy bedzie cześć else, aby wiedziec czy byla ona bezposrednio po if
         last_was_if = true;
     };
     void visit(Else &element) override{

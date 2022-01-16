@@ -6,6 +6,7 @@ class FunctionCallContext{
 private:
     std::vector<Scope> funConVec;
 public:
+    // dodanie zmiennej do najnowszego zakresu ('scope')
     bool addToScope(std::string name, TypeOfData token_type, variantTypes value){
         if(funConVec.empty())
             return false;
@@ -22,6 +23,7 @@ public:
     void popScope(){
         funConVec.pop_back();
     }
+    // sprawdzenie czy zmienna istnieje w najnowszym zakresie
     bool existsInLastScope(std::string name){
         if(funConVec.empty())
             return false;
@@ -30,6 +32,7 @@ public:
             return true;
         return false;
     }
+    // sprawdzenie czy zmienna istnieje w kontekście tej funkcji
     bool existsInScope(std::string name){
         if(funConVec.empty())
             return false;
@@ -39,6 +42,7 @@ public:
         }
         return false;
     }
+    // nadpisanie wartości zmiennej w kontekście tej funkcji
     bool changeInScope(std::string name, variantTypes value){
         if(funConVec.empty())
             return false;
@@ -50,12 +54,21 @@ public:
         }
         return false;
     }
+    // zczytanie wartości zmiennej w kontekście tej funkcji
     variantTypes getValue(std::string name){
         for (auto i = funConVec.rbegin(); i != funConVec.rend(); ++i ) {
             if(i->exists(name))
                 return i->getValue(name);
         }
         return std::monostate{};
+    }
+    // zczytanie typu zmiennej w kontekście tej funkcji
+    TypeOfData getType(std::string name){
+        for (auto i = funConVec.rbegin(); i != funConVec.rend(); ++i ) {
+            if(i->exists(name))
+                return i->getTokenType(name);
+        }
+        return TypeOfData::None;
     }
 };
 #endif //TKOM_21Z_DANIEL_FUNCTIONCALLCONTEXT_H

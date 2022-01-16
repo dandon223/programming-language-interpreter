@@ -9,7 +9,6 @@
 #include <iostream>
 #include <algorithm>
 #include <memory>
-//#include "../errorHandler/ErrorHandler.h"
 class Declaration;
 class VariableDeclr;
 class Expression;
@@ -44,7 +43,8 @@ enum class TypeOfData
     Message,
     Date,
     TimeDiff,
-    Bool
+    Bool,
+    None
 };
 const std::unordered_map<int, std::string> TypeOfDataToString = {
 

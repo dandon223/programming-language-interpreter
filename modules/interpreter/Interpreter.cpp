@@ -1,6 +1,7 @@
 
 
 #include "Interpreter.h"
+//sprawdza czy wynik jest porawnego typu lub da się zrzutować (int ->double)
 bool Interpreter::properType(TypeOfData type,variantTypes value){
     if(value.index() == 0)
         return true;
@@ -22,6 +23,7 @@ bool Interpreter::properType(TypeOfData type,variantTypes value){
 }
 template<class... Ts> struct overload : Ts... { using Ts::operator()...; };
 template<class... Ts> overload(Ts...) -> overload<Ts...>;
+// mnożenie dwóch ostatnich wyników
 void Interpreter::TryToMultiply() {
     auto right_result = results.back();
     results.pop_back();
@@ -34,6 +36,7 @@ void Interpreter::TryToMultiply() {
             [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot multiply those 2 arguments"); },
     }, left_result, right_result);
 }
+// dzielenie dwóch ostatnich wyników
 void Interpreter::TryToDivide() {
     auto right_result = results.back();
     results.pop_back();
@@ -52,6 +55,7 @@ void Interpreter::TryToDivide() {
             [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot divide those 2 arguments"); },
     }, left_result, right_result);
 }
+// dodawanie dwóch ostatnich wyników
 void Interpreter::TryToAdd() {
     auto right_result = results.back();
     results.pop_back();
@@ -72,7 +76,7 @@ void Interpreter::TryToAdd() {
             [](auto &left, auto &right) { ErrorHandler::printInterpreterError("cannot add those 2 arguments"); },
     }, left_result, right_result);
 }
-
+// odejmowanie dwóch ostatnich wyników
 void Interpreter::TryToSubstract() {
     auto right_result = results.back();
     results.pop_back();
@@ -88,7 +92,7 @@ void Interpreter::TryToSubstract() {
             [](auto&, auto& ) { ErrorHandler::printInterpreterError("cannot substract those 2 arguments"); },
     }, left_result, right_result);
 }
-
+// porównywanie dwóch ostatnich wyników
 void Interpreter::TryToCompareValues(std::string type){
     auto right_result = results.back();
     results.pop_back();
@@ -163,6 +167,7 @@ void Interpreter::TryToCompareValues(std::string type){
         }, left_result, right_result);
     }
 }
+// wyrażenie logiczne or lub and dla dwóch wyników, które muszą być typu bool
 void Interpreter::TryToAndOr(std::string type){
     auto right_result = results.back();
     results.pop_back();
@@ -181,6 +186,7 @@ void Interpreter::TryToAndOr(std::string type){
         }, left_result, right_result);
     }
 }
+// zmiana wartosci na typ std::string w celu wyswietlenia wyniku na ekran
 std::string Interpreter::toString(variantTypes value){
     if(value.index() == 0)
         return "";
@@ -203,6 +209,7 @@ std::string Interpreter::toString(variantTypes value){
         return std::get<TimeDiff>(value).toString();
     return "";
 }
+// dodaje funkcje wbudowaną która wypisuje argument typu std::string na ekran
 void Interpreter::addPrintFunction(){
     std::string name = "print";
     TypeOfData typeOfData = TypeOfData::Message;
@@ -214,6 +221,7 @@ void Interpreter::addPrintFunction(){
     auto function = std::make_unique<Function>(Function(name,typeOfData,parameters, nullptr,0,0));
     functions.insert({name,std::move(function)});
 }
+// sprawdza czy utworzona data jest poprawna
 void Interpreter::checkDate(){
     Date date = std::get<Date>(results.back());
     if(date.year <0 || date.month<0 || date.day<0)

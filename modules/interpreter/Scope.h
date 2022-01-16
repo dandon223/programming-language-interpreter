@@ -10,6 +10,7 @@ private:
     std::unordered_map<std::string, TypeOfData> types;
     std::unordered_map<std::string, variantTypes> values;
 public:
+    // dodanie zmiennej do zakresu
     bool addToScope(std::string name, TypeOfData token_type, variantTypes value){
         auto search = types.find(name);
         if(search != types.end())

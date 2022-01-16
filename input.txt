@@ -1,4 +1,6 @@
+fun int a(int b):
+	return b
 fun int main():
-	int b = 2
+	string b = "as\"d"
 	return 1
 
