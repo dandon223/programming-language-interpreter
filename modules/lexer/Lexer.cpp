@@ -478,7 +478,6 @@ bool Lexer::parseIndentation(){
         while(current_char == ' ' || current_char == '\t'){
             getNextChar();
         }
-        //active_token.line_number = line;
         active_token.type = TokenType::Invalid;
         active_token.value = "spacebar after indentation";
         ErrorHandler::printLexerError(active_token,getWholeLine(active_token.start_pos));

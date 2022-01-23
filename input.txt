@@ -1,2 +1,14 @@
-fun bool a(bool b):
-	int b
+fun int b():
+	int x =10
+	while x > 0:
+		if(x == 4):
+			return x
+		print(""+x+" ")
+		x = x -1
+	return 0
+fun int main():
+	b()
+	if(1 < 2):
+		return 1
+
+

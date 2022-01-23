@@ -146,6 +146,5 @@ struct TokenGet {
     std::string operator()(TimeDiff value) { return value.toString(); }
 };
 std::string TokenValueToString(const std::variant<int, std::string,double,Date,TimeDiff>& input);
-std::string getStringToken(struct Token token);
 
 #endif //TKOM_21Z_DANIEL_TOKEN_H

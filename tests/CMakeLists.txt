@@ -6,7 +6,7 @@ project(tests)
 
 message(STATUS "start running cmake...")
 
-find_package(Boost 1.77.0 COMPONENTS unit_test_framework REQUIRED)
+find_package(Boost 1.71.0 COMPONENTS unit_test_framework REQUIRED)
 if(Boost_FOUND)
 
     message(STATUS "Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
@@ -17,7 +17,7 @@ if(Boost_FOUND)
 
 endif()
 
-add_executable(tests LexerTests.cpp ParserTests.cpp )
+add_executable(tests LexerTests.cpp ParserTests.cpp InterpreterTests.cpp )
 
 if(Boost_FOUND)
 
