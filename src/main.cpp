@@ -15,9 +15,9 @@ int main()
     Parser parser = Parser(lexer);
     std::unique_ptr<Program> program = parser.TryToParseProgram();
     if(program){
-        PrintVisitor printVisitor = PrintVisitor();
-        program->accept(printVisitor);
-        std::cout<< printVisitor.debug;
+        // printVisitor = PrintVisitor();
+        //program->accept(printVisitor);
+        //std::cout<< printVisitor.debug;
 
         Interpreter interpreter = Interpreter();
         program->accept(interpreter);

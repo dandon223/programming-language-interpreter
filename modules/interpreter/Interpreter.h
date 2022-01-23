@@ -261,6 +261,8 @@ public:
             results.pop_back();
             element.body.operator*().accept(*this);
             element.condition.operator*().accept(*this);
+            if(!to_continue)
+                break;
         }
         results.pop_back();
         functions_scopes.back().popScope();

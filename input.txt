@@ -1,6 +1,14 @@
-fun int a(int b):
-	return b
+fun int b():
+	int x =10
+	while x > 0:
+		if(x == 4):
+			return x
+		print(""+x+" ")
+		x = x -1
+	return 0
 fun int main():
-	string b = "as\"d"
-	return 1
+	b()
+	if(1 < 2):
+		return 1
+
 
