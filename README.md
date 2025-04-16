@@ -1,45 +1,45 @@
-# Implementacja interpretera języka programowania ogólnego przeznaczenia z wbudowanym typem danych przedstawiającym datę.
+# Implementation of an interpreter for a general-purpose programming language with a built-in data type representing a date.
 
-## Opis języka
+## Language description
 <p align="justify">
-Język ten czerpie zarówno z Pythona jak i z C++. Zakresy zmiennych i przynależność instrukcji do bloków i funkcji określa wcięcie typowo widziane w takich językach jak python. Dzięki temu pozbywamy się niepotrzebnych nawiasów. Z drugiej strony zmiennym należy określić typ przy definicji z uwagi na większą czytelność kodu.
+This language draws inspiration from both Python and C++. Variable scopes and the association of statements with blocks and functions are determined by indentation, as is typical in languages like Python. This eliminates the need for unnecessary braces. On the other hand, variables must be explicitly typed upon definition to ensure greater code readability.
 </p>
 
-## Zasady działania języka
-* obsługuje liczny całkowite i ułamki
-  * obsługuje operacje matematyczne o różnym priorytecie wykonania
-  * obsługuje operacje logicznie i porównania o różnym priorytecie wykonania
-* obsługuje typ znakowy
-  * obsługuje konkatenacje napisów tylko z innymi napisami
-  * może zawierać dowolne znaki, też wyróżnik napisu (” ”)
-* obsługuje typ bool
-* obsługa operatorów porównania dwóch dat
-* typ timeDiff, powstający w wyniku odjęcia daty większej od mniejszej
-* w języku tym będzie można pisać komentarze
-* obsługuje tworzenie zmiennych, przypisywanie do nich wartości oraz je odczytywać
-  * typowanie statyczne
-  * typowanie słabe dla int i float
-  * mutowalne
-  * zmienne będą miały zakresy lokalne
-* obsługiwana będzie pętla warunkowa if else
-* obsługiwana będzie bazowa pętla while
-* obsługiwana będzie możliwość wołania i definiowania własnych funkcji ze zmiennymi lokalnymi, gdzie argumenty będą przekazywane przez wartość
-* obsługa rekursywnych wywołań funkcji
-* wbudowana funkcja print przyjmująca jeden argument typu napis
+## Language Behavior Rules
+* Supports integers and floating-point numbers
+  * Supports mathematical operations with varying execution precedence
+  * Supports logical operations and comparisons with varying precedence
+* Supports the character (string) type
+  * Allows string concatenation only with other strings
+  * Strings may contain any characters, including the delimiter (" ") itself
+* Supports the bool type
+* Supports comparison operators for two dates
+* Introduces a timeDiff type, resulting from subtracting a smaller date from a larger one
+* Allows writing comments in the language
+* Supports variable creation, assignment, and reading
+  * Static typing
+  * Weak typing for int and float
+  * Variables are mutable
+  * Variables have local scopes
+* Supports conditional loops with if else
+* Supports basic while loop
+* Allows defining and calling custom functions with local variables, where arguments are passed by value
+* Supports recursive function calls
+* Built-in print function that accepts a single string-type argument
 
-## Struktura projektu
+## Project structure
 
-* projekt zostanie napisany w c++
-* będzie to aplikacja okienkowa do której będzie się podawało skrypt, który będzie poddany interpretacji
-* testowanie za pomocą testów jednostkowych z użyciem biblioteki Boost
-* Moduły:
-  * moduł analizatora leksykalnego, czyta ciąg znaków i tworzy kolejne tokeny po prośbie analizatora składniowego; wykrywa nieprawidłowe tokeny i sygnalizuje to modułowi obsługi błędów
-  * moduł analizatora składniowego, prosi analizator leksykalny o kolejne tokeny i tworzy z nich drzewa rozbioru, wykrywa błędy składniowe; wykrywa nieprawidłową składnię kolejnych tokenów i sygnalizuje to modułowi obsługi błędów
-  * moduł analizatora semantycznego, sprawdzająć utworzone drzewa rozbioru sprawdza czy mają one sens, czy nie ma w nich błędów takich jak naprzykład operator + dla niewłaściwych typów, wykonuje tak dostarczony program
-  * moduł obsługi błędów, przy nieudanym sparsowaniu ciągu znaków podaje kolejne wykryte błędy użytkownikowi
-  * tablica identyfikatorów razem z tymi zarezerwowanymi przez język i jej zarządzanie; używana przez moduły analizatora leksykalnego, składniowego oraz semantycznego
+* The project is written in C++
+* It will be a graphical application where a script can be provided for interpretation
+* Testing will be done using unit tests with the Boost library
+* Modules:
+  * Lexical Analyzer Module, Reads a stream of characters and produces tokens as requested by the syntax analyzer; Detects invalid tokens and signals them to the error handling module
+  * Syntax Analyzer Module, Requests tokens from the lexical analyzer and constructs parse trees, Detects syntax errors and signals them to the error handling module
+  * Semantic Analyzer Module, Checks the constructed parse trees to ensure they make semantic sense, Detects errors such as using the + operator with incompatible types, Executes the validated program
+  * Error Handling Module, When parsing fails, provides the user with a list of detected errors
+  * Identifier Table Module,  Stores and manages all identifiers, including those reserved by the language; Used by the lexical, syntax, and semantic analyzer modules
 
-## Gramatyka
+## Grammar
 
 ```
 program             ::= ( functionDefinition | declaration )*
@@ -111,7 +111,7 @@ empty               ::= ’’
 
 ```
 
-## Przykład kodu
+## Code example
 ```
 1)
 fun int start():
@@ -145,32 +145,32 @@ fun int start():
   return 1
 ```
 
-## Kompilacja projektu
+## Project compilation
 
 ### Kompilacja 
 <p align="justify">
-Żeby skompilować projekt należy uruchomić skrypt make.sh, który znajduje się w głównym folderze projektu.
+To compile the project, run the make.sh script located in the root directory of the project.
 </p>
 
-### Uruchomienie
+### Running
 
 <p align="justify">
-Aby uruchomić uprzednio zbudowany projekt należy wejśc do podkatalogu build i uruchomić powstały program z terminalu. Plikiem wejściowym jest plik input.txt znajdujący się podkatalog wyżej.
+To run the previously built project, navigate to the build subdirectory and launch the generated program from the terminal. The input file is input.txt, located one directory level above.
 </p>
 
-### Testowanie
+### Testing
 
 <p align="justify">
-Testy zostały napisane z użyciem biblioteki Boost. Aby je uruchomić należy użyć skrypty budującego make.sh znajdującego się w podfolderze tests. Następnie w folderze build znajdziemy plik wykonywalny testów. Należy go uruchomić.
+The tests were written using the Boost library. To run them, use the build script make.sh located in the tests subfolder. Then, in the build folder, you will find the test executable. Run it to execute the tests.
 </p>
 
-## Instrukcja użycia 
+## Instruction to use
 
-### Zmienne 
+### Variables 
 
 <p align="justify">
-Zmienne można deklarować zarówno globalnie jak i w funkcjach. Deklaracja zmiennych wygląda następująco. <typ> <nazwa> = <wyrażenie arytmetyczne> Dostępne typy zmiennych to : int, float, string, bool, date, timeDiff. Przy deklaracji zmiennych nie trzeba odrazu podawać wartości (można ominąć = <wyrażenie arytmetyczne>).
-Przykłady:
+Variables can be declared both globally and within functions. Variable declaration is as follows. <type> <name> = <arithemtic operation> Available types are : int, float, string, bool, date, timeDiff. When declaring variables, you don't have to provide a value immediately.  (without = <arithemtic operation> part).
+Examples:
 </p>
   
 * int a =1
@@ -181,34 +181,35 @@ Przykłady:
 * timeDiff e = {1y1m1d}
   
 <p align="justify">
-W napisie może też wystąpić znak ” poprzez poprzedzenie go znakiem \, jak np. ”przy\”klad”. Przy różnicy czasu
-zawsze należy podawać liczbę lat, miesięcy i dni, nawet jeżeli wynosi ona 0.
+The character ” can also appear in the string by preceding it with the character \, such as ”przy\”example”. When specifying a time difference, the number of years, months, and days should always be given, even if it is 0.
 </p>
   
-### wyrażenia arytmetyczne
+### arithmetic expressions
   
 <p align="justify">
-  Na zmiennych typu int oraz float można wykonywać podstawowe operacje: dodawanie, odejmowanie, mnożenie, dzielenie Zachowana jest prawidłowa kolejność wykonywania działań, tzn. najpierw mnożenie i dzielenie, a następnie dodawanie i odejmowanie. Kolejność wykonywania działań można zmienić za pomocą nawiasów. Zmienną typu string można konkatenować z dowolnym inną zmienną, np. dodając do niej zmienną typu data.
+  Basic operations can be performed on variables of type int and float: addition, subtraction, multiplication, division. The correct order of operations is maintained, i.e. first multiplication and division, then addition and subtraction. The order of operations can be changed using parentheses. A string variable can be concatenated with any other variable, e.g. by adding a data variable to it.
+
 </p>
   
 ```
-string a = ”teraz jest: ”+[2022:01:16]
+string a = ”now is: ”+[2022:01:16]
 ```
   
 <p align="justify">
-Od daty można odjąć datę aby otrzymać różnicę czasu, przy czym odejmowana data musi być mniejszą datą. Od daty można też odjąć różnicę czasu aby otrzymać datę mniejszą.
+You can subtract the date from date to get the time difference, but the date you subtract must be the smaller date. You can also subtract the time difference from the date to get the smaller date.
+
 </p>
  
-### porównania i wyrażenia logiczne 
+### comparisons and logical expressions
 
 <p align="justify">
-W języku mamy podstawowe operatory porównania ”==” - równe, ”!=” - różne, ”<” – mniejsze, ”>” - większe, ”<=” - niewiększe, ”>=” - niemniejsze. Język udostępnia klasyczne operatory logiczne: negacja ”!”, koniunkcja ”and”, oraz alternatywa ”or”. Można je stosować tylko, kiedy lewa i prawa strona są typu bool.
+The language has basic comparison operators ”==” - equal, ”!=” - different, ”<” - less, ”>” - greater, ”<=” - not greater, ”>=” - not less. The language provides classic logical operators: negation ”!”, conjunction ”and”, and disjunction ”or”. They can only be used when the left and right sides are of type bool.
 </p>
   
-### instrukcja warunkowa if
+### if else statement
 
 <p align="justify">
-  Instrukcja if jest tutaj typową instrukcją tego typu dla języków programowania.
+  The if statement here is a typical statement of this type for programming languages.
 </p>
 
 ```
@@ -217,7 +218,7 @@ if True:
 ```
 
 <p align="justify">
-Instrukcja else jest opcjonalna i musi się ona znajdować bezpośrednio po zakończonym bloku instrukcji if.
+The else statement is optional and must appear immediately after the completed if statement block.
 </p>
 
 ```
@@ -228,18 +229,17 @@ else:
 ```
 
 <p align="justify">
-Warunek w instrukcji if może przyjmować bardziej złożony wygląd. Można korzystać zarówno z wyrażeń logicznych,
-porównań jak i wyrażeń arytmetycznych. Np: 
+The condition in the if statement can take on a more complex form. You can use both logical expressions, comparisons, and arithmetic expressions. For example:
 </p>
 
 ```
 if (1 - 2)*2
 ```
 
-### pętla while
+### While loop
 
 <p align="justify">
-  Tak samo jak instrukcja if, jest t typowa konstrukcja pętli while w językach programowania.
+  Like the if statement, this is a typical while loop construct in programming languages.
 </p>
 
 ```
@@ -248,30 +248,30 @@ while a > 1:
   a = a - 1
 ```
 
-### funkcje
+### Functions
 
 <p align="justify">
- Użytkownik może tworzyć własne funkcje. Muszą się one rozpocząć słówkiem ”fun” oraz mieć zerowe wcięcie
-w dokumencie. Funkcja ”main” nie może mieć parametrów. Każda funkcja musi zwracać zadeklarowany typ
-zmiennej.Parametry funkcji podajemy po przecinku razem z ich typem, np: int a.
-Funkcje przyjmują argumenty jako kopie wartości, dlatego nie są one nadpisywane pozą funkcją do któej zostały
-one podane.
+ The user can create their own functions. They must start with the word "fun" and have zero indentation
+in the document. The "main" function cannot have parameters. Each function must return a declared type
+of variable. Function parameters are given after a comma together with their type, e.g.: int a.
+Functions accept arguments as copies of values, so they are not overwritten outside the function to which they were
+given.
 </p>
 
 ```
-fun <typ> <nazwa> (<parametry>) :
-  ciało funkcji
+fun <type> <name> (<parameters>) :
+  function body
 ```
   
-### funkcja wbudowana 
+### built-in function
 
 <p align="justify">
-  Dla użytkownika dostępna jest funkcja wbudowana ”print”. Przyjmuje ona jeden argument typu string, który
-wypisuje na ekran. W celu podania na wyjście innych typów zmiennych niż string należy wymusić zmiane typu,
-poprzez konkatenację z pustym stringiem.
+  The built-in function "print" is available to the user. It takes one argument of type string, which
+prints to the screen. In order to output variables of other types than string, you must force a change of type,
+by concatenating with an empty string.
 </p>
 
 ```
-int a =1
+int a = 1
 print("" +a)
 ```
